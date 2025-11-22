@@ -162,7 +162,8 @@ class DeckyController:
 
         current_time = time.time()
 
-        for key_index, anim_data in self.animated_buttons.items():
+        # Create a copy of keys to avoid dictionary change during iteration
+        for key_index, anim_data in list(self.animated_buttons.items()):
             # Check if it's time to advance to next frame
             frame_duration = anim_data['durations'][anim_data['current_frame']] / 1000.0  # Convert ms to seconds
             if current_time - anim_data['last_update'] >= frame_duration:
@@ -258,26 +259,85 @@ class DeckyController:
             font_size = style.get("font_size", 14)
             text_color = style.get("text_color", "#FFFFFF")
 
+            # Get text position settings
+            text_align = style.get("text_align", "bottom")  # top, center, bottom
+            text_offset = style.get("text_offset", 0)  # Fine adjustment in pixels
+
             # Try to load font, fall back to default if not found
-            try:
-                # Make font bold for better visibility over icons
-                if icon_loaded and "Bold" not in font_name:
-                    # Try to load bold variant
-                    try:
-                        font = ImageFont.truetype(font_name.replace("Sans", "Sans Bold"), font_size)
-                    except:
-                        font = ImageFont.truetype(font_name, font_size)
-                else:
-                    font = ImageFont.truetype(font_name, font_size)
-            except:
+            font_loaded = False
+            font = None
+
+            # If font_name is a path, use it directly
+            if '/' in font_name or font_name.endswith('.ttf'):
+                font_path = os.path.expanduser(font_name)
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                    logger.debug(f"Loaded font from path: {font_path}")
+                    font_loaded = True
+                except Exception as e:
+                    logger.warning(f"Failed to load font from path '{font_path}': {e}")
+
+            # Otherwise, search for the font
+            if not font_loaded:
+                # Common font directories
+                font_dirs = [
+                    "/usr/share/fonts",
+                    "/usr/local/share/fonts",
+                    "~/.fonts",
+                    "~/.local/share/fonts"
+                ]
+
+                for font_dir in font_dirs:
+                    font_dir = os.path.expanduser(font_dir)
+                    if not os.path.exists(font_dir):
+                        continue
+
+                    # Search for font files matching the name
+                    for root, dirs, files in os.walk(font_dir):
+                        for file in files:
+                            if file.endswith(('.ttf', '.otf')):
+                                # Check if filename contains the font name (case insensitive)
+                                if font_name.lower().replace(' ', '') in file.lower().replace(' ', ''):
+                                    font_path = os.path.join(root, file)
+                                    try:
+                                        # Try bold variant for icon overlays
+                                        if icon_loaded and 'bold' not in font_name.lower() and 'bold' in file.lower():
+                                            font = ImageFont.truetype(font_path, font_size)
+                                            logger.debug(f"Loaded bold font: {font_path}")
+                                            font_loaded = True
+                                            break
+                                        elif 'regular' in file.lower() or (not icon_loaded):
+                                            font = ImageFont.truetype(font_path, font_size)
+                                            logger.debug(f"Loaded font: {font_path}")
+                                            font_loaded = True
+                                            break
+                                    except Exception as e:
+                                        continue
+                        if font_loaded:
+                            break
+                    if font_loaded:
+                        break
+
+            if not font_loaded:
+                logger.warning(f"Failed to load font '{font_name}', using default")
                 font = ImageFont.load_default()
 
             # Process multi-line text
             lines = text.split('\n')
 
             if icon_loaded:
-                # Overlay text on icon with shadow for readability
-                y_offset = image_size[1] - (len(lines) * (font_size + 2)) - 8
+                # Calculate text position based on alignment
+                total_text_height = len(lines) * (font_size + 2)
+
+                if text_align == "top":
+                    y_offset = 8  # Small margin from top
+                elif text_align == "center":
+                    y_offset = (image_size[1] - total_text_height) // 2
+                else:  # bottom (default)
+                    y_offset = image_size[1] - total_text_height - 8
+
+                # Apply fine adjustment offset
+                y_offset += text_offset
 
                 for line in lines:
                     line_bbox = draw.textbbox((0, 0), line, font=font)
@@ -296,8 +356,19 @@ class DeckyController:
                     draw.text((text_x, y_offset), line, font=font, fill=text_color)
                     y_offset += font_size + 2
             else:
-                # Center text if no icon
-                y_offset = (image_size[1] - (len(lines) * (font_size + 2))) // 2
+                # Calculate text position based on alignment (no icon case)
+                total_text_height = len(lines) * (font_size + 2)
+
+                if text_align == "top":
+                    y_offset = 8
+                elif text_align == "center":
+                    y_offset = (image_size[1] - total_text_height) // 2
+                else:  # bottom
+                    y_offset = image_size[1] - total_text_height - 8
+
+                # Apply fine adjustment offset
+                y_offset += text_offset
+
                 for line in lines:
                     line_bbox = draw.textbbox((0, 0), line, font=font)
                     line_width = line_bbox[2] - line_bbox[0]
@@ -470,6 +541,29 @@ class DeckyController:
                     subprocess.Popen(command, shell=True)
                 except Exception as e:
                     logger.error(f"Failed to execute command: {e}")
+
+        elif action_type == "application":
+            # Launch desktop application using desktop file ID
+            app = action.get("app")
+            if app:
+                logger.info(f"Launching application: {app}")
+                try:
+                    # Use the launcher helper script that handles environment setup
+                    launcher_script = os.path.expanduser("~/.decky/scripts/launch-application.sh")
+                    if os.path.exists(launcher_script):
+                        # Use Popen to launch without blocking
+                        subprocess.Popen(
+                            [launcher_script, app],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                    else:
+                        logger.error(f"Launcher script not found at {launcher_script}")
+                        # Fallback to simple command
+                        subprocess.Popen(app, shell=True)
+
+                except Exception as e:
+                    logger.error(f"Failed to launch application {app}: {e}")
 
         elif action_type == "keypress":
             keys = action.get("keys", [])
