@@ -85,26 +85,56 @@ class DeckyController:
 
         # Load icon if specified
         icon_path = button_config.get("icon")
+        icon_loaded = False
         if icon_path:
             icon_file = self._find_icon(icon_path)
             if icon_file and os.path.exists(icon_file):
                 try:
                     icon = Image.open(icon_file)
-                    # Resize icon to fit button (leaving some padding)
-                    icon_size = (image_size[0] - 20, image_size[1] - 30)
-                    icon.thumbnail(icon_size, Image.Resampling.LANCZOS)
 
-                    # Paste icon centered
-                    icon_pos = ((image_size[0] - icon.width) // 2,
-                               (image_size[1] - icon.height) // 2 - 10)
+                    # Icon always fills the entire button
+                    target_size = image_size  # Use full button size
+                    y_offset = 0
+
+                    # Convert RGBA to RGB if needed (for transparency handling)
                     if icon.mode == 'RGBA':
-                        image.paste(icon, icon_pos, icon)
+                        # Create a new image with the background color and paste the icon
+                        temp = Image.new('RGB', icon.size, bg_color)
+                        temp.paste(icon, (0, 0), icon)
+                        icon = temp
+
+                    # Calculate scale to fill button completely
+                    # Scale based on the dimension that needs less scaling (to fill whole button)
+                    scale_w = target_size[0] / icon.width
+                    scale_h = target_size[1] / icon.height
+                    scale = max(scale_w, scale_h)  # Use max to ensure full coverage
+
+                    # Resize the icon
+                    new_size = (int(icon.width * scale), int(icon.height * scale))
+                    icon = icon.resize(new_size, Image.Resampling.LANCZOS)
+
+                    # Crop to fit if oversized (center crop)
+                    if icon.width > target_size[0] or icon.height > target_size[1]:
+                        left = (icon.width - target_size[0]) // 2
+                        top = (icon.height - target_size[1]) // 2
+                        right = left + target_size[0]
+                        bottom = top + target_size[1]
+                        icon = icon.crop((left, top, right, bottom))
+
+                    # Paste icon centered (or at 0,0 if full size)
+                    if icon.size == target_size:
+                        icon_pos = (0, 0)  # Full button coverage
                     else:
-                        image.paste(icon, icon_pos)
+                        icon_pos = ((image_size[0] - icon.width) // 2,
+                                   (image_size[1] - icon.height) // 2 + y_offset)
+
+                    # Paste the icon (already converted to RGB if needed)
+                    image.paste(icon, icon_pos)
+                    icon_loaded = True
                 except Exception as e:
                     logger.warning(f"Failed to load icon {icon_file}: {e}")
 
-        # Draw text
+        # Draw text (overlay on icon if present)
         text = button_config.get("text") or button_config.get("label", "")
         if text:
             font_name = style.get("font", "DejaVu Sans")
@@ -113,53 +143,102 @@ class DeckyController:
 
             # Try to load font, fall back to default if not found
             try:
-                font = ImageFont.truetype(font_name, font_size)
+                # Make font bold for better visibility over icons
+                if icon_loaded and "Bold" not in font_name:
+                    # Try to load bold variant
+                    try:
+                        font = ImageFont.truetype(font_name.replace("Sans", "Sans Bold"), font_size)
+                    except:
+                        font = ImageFont.truetype(font_name, font_size)
+                else:
+                    font = ImageFont.truetype(font_name, font_size)
             except:
                 font = ImageFont.load_default()
 
-            # Calculate text position (bottom center if icon, center if no icon)
-            text_bbox = draw.textbbox((0, 0), text, font=font)
-            text_width = text_bbox[2] - text_bbox[0]
-            text_height = text_bbox[3] - text_bbox[1]
+            # Process multi-line text
+            lines = text.split('\n')
 
-            if icon_path:
-                text_pos = ((image_size[0] - text_width) // 2,
-                           image_size[1] - text_height - 5)
+            if icon_loaded:
+                # Overlay text on icon with shadow for readability
+                y_offset = image_size[1] - (len(lines) * (font_size + 2)) - 8
+
+                for line in lines:
+                    line_bbox = draw.textbbox((0, 0), line, font=font)
+                    line_width = line_bbox[2] - line_bbox[0]
+                    text_x = (image_size[0] - line_width) // 2
+
+                    # Draw shadow/outline for better readability
+                    shadow_color = "#000000"
+                    for dx in [-1, 0, 1]:
+                        for dy in [-1, 0, 1]:
+                            if dx != 0 or dy != 0:
+                                draw.text((text_x + dx, y_offset + dy), line,
+                                        font=font, fill=shadow_color)
+
+                    # Draw the actual text
+                    draw.text((text_x, y_offset), line, font=font, fill=text_color)
+                    y_offset += font_size + 2
             else:
                 # Center text if no icon
-                lines = text.split('\n')
-                y_offset = (image_size[1] - (text_height * len(lines))) // 2
+                y_offset = (image_size[1] - (len(lines) * (font_size + 2))) // 2
                 for line in lines:
                     line_bbox = draw.textbbox((0, 0), line, font=font)
                     line_width = line_bbox[2] - line_bbox[0]
                     text_pos = ((image_size[0] - line_width) // 2, y_offset)
                     draw.text(text_pos, line, font=font, fill=text_color)
-                    y_offset += text_height
-
-            if icon_path:
-                draw.text(text_pos, text, font=font, fill=text_color)
+                    y_offset += font_size + 2
 
         return PILHelper.to_native_format(self.deck, image)
 
-    def _find_icon(self, icon_name: str) -> Optional[str]:
-        """Find icon file by name or path"""
-        # If it's already a full path
-        if os.path.isabs(icon_name):
-            return icon_name if os.path.exists(icon_name) else None
+    def _find_icon(self, icon_path: str) -> Optional[str]:
+        """Find icon file by name or path
 
-        # Check in images directory
+        Searches in the following order:
+        1. Absolute path (with ~ expansion)
+        2. Relative to ~/.decky/
+        3. Relative to config file directory
+        4. In ~/.decky/icons/ directory
+        5. In legacy images/ directory (for backward compatibility)
+        """
+        # Expand user home directory
+        icon_path = os.path.expanduser(icon_path)
+
+        # If it's already an absolute path
+        if os.path.isabs(icon_path):
+            return icon_path if os.path.exists(icon_path) else None
+
+        # Try relative to ~/.decky/
+        decky_home = Path.home() / ".decky"
+        possible_path = decky_home / icon_path
+        if possible_path.exists():
+            return str(possible_path)
+
+        # Try relative to config file directory
+        config_dir = self.config_path.parent
+        possible_path = config_dir / icon_path
+        if possible_path.exists():
+            return str(possible_path)
+
+        # Try in ~/.decky/icons/ directory (without full path)
+        icons_dir = decky_home / "icons"
+        if icons_dir.exists():
+            possible_path = icons_dir / icon_path
+            if possible_path.exists():
+                return str(possible_path)
+
+        # Legacy: Check in images directory relative to the project
         images_dir = self.config_path.parent.parent / "images"
+        if images_dir.exists():
+            # Try with common extensions
+            for ext in ['.png', '.jpg', '.jpeg', '.gif', '.svg']:
+                legacy_path = images_dir / f"{icon_path}{ext}"
+                if legacy_path.exists():
+                    return str(legacy_path)
 
-        # Try with common extensions
-        for ext in ['.png', '.jpg', '.jpeg', '.gif', '.svg']:
-            icon_path = images_dir / f"{icon_name}{ext}"
-            if icon_path.exists():
-                return str(icon_path)
-
-        # Try as-is (might already have extension)
-        icon_path = images_dir / icon_name
-        if icon_path.exists():
-            return str(icon_path)
+            # Try as-is (might already have extension)
+            legacy_path = images_dir / icon_path
+            if legacy_path.exists():
+                return str(legacy_path)
 
         return None
 

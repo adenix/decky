@@ -208,13 +208,32 @@ buttons:
 ```
 
 ### Using Icons
-Place images in the `images/` folder and reference by name:
+Icons can be specified in multiple ways:
 ```yaml
 buttons:
   1:
-    icon: "firefox"  # Looks for firefox.png, firefox.jpg, etc.
-    label: "Browser"  # Optional text below icon
+    # Absolute path with ~ expansion
+    icon: "~/.decky/icons/Duotone/red/play-pause.png"
+
+  2:
+    # Relative to ~/.decky/
+    icon: "icons/Duotone/blue/terminal.png"
+
+  3:
+    # Just the filename (searches in ~/.decky/icons/)
+    icon: "firefox.png"
+
+  4:
+    # Legacy: name without extension (searches in images/ folder)
+    icon: "browser"  # Looks for browser.png, browser.jpg, etc.
 ```
+
+Icon search order:
+1. Absolute path (with `~` expansion)
+2. Relative to `~/.decky/`
+3. Relative to config file directory
+4. In `~/.decky/icons/` directory
+5. In legacy `images/` directory (for backward compatibility)
 
 ### Custom Styles
 ```yaml
