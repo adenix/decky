@@ -1,0 +1,63 @@
+#!/bin/bash
+# Decky - Stream Deck controller for Linux
+# This wrapper ensures we use the correct Python environment
+
+# Try to find the Decky installation directory
+find_decky_dir() {
+    # 1. Check if DECKY_HOME environment variable is set
+    if [ -n "$DECKY_HOME" ]; then
+        echo "$DECKY_HOME"
+        return
+    fi
+
+    # 2. Check if this script is a symlink and follow it
+    SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+    SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+
+    # 3. Check if we're running from the development directory (bin/decky)
+    if [ -f "$SCRIPT_DIR/../src/decky/cli.py" ]; then
+        echo "$(cd "$SCRIPT_DIR/.." && pwd)"
+        return
+    fi
+
+    # 4. Check common installation locations
+    for dir in /opt/decky /usr/local/decky /usr/share/decky "$HOME/.local/share/decky"; do
+        if [ -f "$dir/src/decky/cli.py" ]; then
+            echo "$dir"
+            return
+        fi
+    done
+
+    # 5. Last resort: check if decky module is in current directory structure
+    CURRENT_DIR="$(pwd)"
+    if [ -f "$CURRENT_DIR/src/decky/cli.py" ]; then
+        echo "$CURRENT_DIR"
+        return
+    fi
+
+    # Failed to find Decky directory
+    echo ""
+}
+
+# Find the Decky installation directory
+DECKY_DIR="$(find_decky_dir)"
+
+if [ -z "$DECKY_DIR" ]; then
+    echo "Error: Unable to find Decky installation directory." >&2
+    echo "Please set DECKY_HOME environment variable or run from the Decky directory." >&2
+    echo "" >&2
+    echo "Example:" >&2
+    echo "  export DECKY_HOME=/path/to/decky" >&2
+    echo "  decky --help" >&2
+    exit 1
+fi
+
+# Use the virtual environment if it exists
+if [ -f "$DECKY_DIR/.venv/bin/python" ]; then
+    export PYTHONPATH="$DECKY_DIR/src:$PYTHONPATH"
+    exec "$DECKY_DIR/.venv/bin/python" -m decky.cli "$@"
+else
+    # Fallback to system Python with the correct path
+    export PYTHONPATH="$DECKY_DIR/src:$PYTHONPATH"
+    exec python3 -m decky.cli "$@"
+fi
