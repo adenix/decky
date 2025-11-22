@@ -1,0 +1,35 @@
+# Minimal Decky configuration example
+# This shows the bare minimum needed to get started
+
+pages:
+  main:
+    buttons:
+      1:
+        text: "Terminal"
+        action:
+          type: command
+          command: "konsole"
+
+      2:
+        text: "Browser"
+        action:
+          type: command
+          command: "google-chrome"
+
+      3:
+        text: "Editor"
+        action:
+          type: command
+          command: "konsole -e nvim"
+
+      4:
+        text: "Alert"
+        action:
+          type: command
+          command: "notify-send 'Stream Deck' 'Hello from Decky! 🚀'"
+
+      5:
+        text: "Files"
+        action:
+          type: command
+          command: "dolphin"

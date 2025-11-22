@@ -1,0 +1,257 @@
+# Decky - Simple YAML-driven Stream Deck configuration
+# Example configuration file
+
+device:
+  brightness: 75  # 0-100
+  rotation: 0     # 0, 90, 180, 270
+
+# Define reusable styles
+styles:
+  default:
+    font: "DejaVu Sans"
+    font_size: 14
+    text_color: "#FFFFFF"
+    background_color: "#333333"
+
+  active:
+    font: "DejaVu Sans Bold"
+    font_size: 14
+    text_color: "#000000"
+    background_color: "#00FF00"
+
+  media:
+    font: "DejaVu Sans"
+    font_size: 12
+    text_color: "#FFFFFF"
+    background_color: "#1DB954"
+
+# Define pages of buttons
+pages:
+  main:
+    name: "Main"
+    buttons:
+      1:
+        label: "Terminal"
+        icon: "terminal"  # Can be icon name or path to image
+        action:
+          type: command
+          command: "gnome-terminal"
+
+      2:
+        label: "VS Code"
+        icon: "vscode"
+        action:
+          type: command
+          command: "code"
+
+      3:
+        label: "Browser"
+        icon: "firefox"
+        action:
+          type: command
+          command: "firefox"
+
+      4:
+        label: "Files"
+        icon: "folder"
+        action:
+          type: command
+          command: "nautilus"
+
+      5:
+        label: "Screenshot"
+        icon: "camera"
+        action:
+          type: command
+          command: "gnome-screenshot -i"
+
+      6:
+        label: "Mute"
+        icon: "mic-mute"
+        style: "default"
+        action:
+          type: keypress
+          keys: ["ctrl", "alt", "m"]
+
+      7:
+        label: "Play/Pause"
+        icon: "play-pause"
+        style: "media"
+        action:
+          type: keypress
+          keys: ["XF86AudioPlay"]
+
+      8:
+        label: "Vol -"
+        icon: "volume-down"
+        action:
+          type: command
+          command: "pactl set-sink-volume @DEFAULT_SINK@ -5%"
+
+      9:
+        label: "Vol +"
+        icon: "volume-up"
+        action:
+          type: command
+          command: "pactl set-sink-volume @DEFAULT_SINK@ +5%"
+
+      10:
+        label: "Brightness -"
+        text: "☀️ -"
+        action:
+          type: brightness
+          change: -10
+
+      11:
+        label: "Brightness +"
+        text: "☀️ +"
+        action:
+          type: brightness
+          change: 10
+
+      12:
+        label: "Lock"
+        icon: "lock"
+        action:
+          type: command
+          command: "gnome-screensaver-command -l"
+
+      13:
+        label: "Workspace ←"
+        text: "←"
+        action:
+          type: keypress
+          keys: ["ctrl", "alt", "Left"]
+
+      14:
+        label: "Workspace →"
+        text: "→"
+        action:
+          type: keypress
+          keys: ["ctrl", "alt", "Right"]
+
+      15:
+        label: "Dev Tools"
+        text: "DEV"
+        style: "active"
+        action:
+          type: page
+          page: "development"
+
+  development:
+    name: "Development"
+    buttons:
+      1:
+        label: "Git Status"
+        text: "git\nstatus"
+        action:
+          type: command
+          command: "gnome-terminal -- bash -c 'git status; read -p \"Press enter to continue...\"'"
+
+      2:
+        label: "Docker PS"
+        text: "docker\nps"
+        action:
+          type: command
+          command: "gnome-terminal -- bash -c 'docker ps; read -p \"Press enter to continue...\"'"
+
+      3:
+        label: "NPM Start"
+        text: "npm\nstart"
+        action:
+          type: command
+          command: "gnome-terminal -- npm start"
+
+      4:
+        label: "Build"
+        text: "make"
+        action:
+          type: command
+          command: "gnome-terminal -- make"
+
+      5:
+        label: "Test"
+        text: "test"
+        action:
+          type: command
+          command: "gnome-terminal -- npm test"
+
+      6:
+        label: "GitHub"
+        icon: "github"
+        action:
+          type: command
+          command: "xdg-open https://github.com"
+
+      7:
+        label: "GitLab"
+        icon: "gitlab"
+        action:
+          type: command
+          command: "xdg-open https://gitlab.com"
+
+      8:
+        label: "Localhost"
+        text: "localhost\n:3000"
+        action:
+          type: command
+          command: "xdg-open http://localhost:3000"
+
+      9:
+        label: "DB Client"
+        text: "DB"
+        action:
+          type: command
+          command: "dbeaver"
+
+      10:
+        label: "Postman"
+        text: "API"
+        action:
+          type: command
+          command: "postman"
+
+      11:
+        label: "K9s"
+        text: "K9s"
+        action:
+          type: command
+          command: "gnome-terminal -- k9s"
+
+      12:
+        label: "htop"
+        text: "htop"
+        action:
+          type: command
+          command: "gnome-terminal -- htop"
+
+      13:
+        label: "Logs"
+        text: "logs"
+        action:
+          type: command
+          command: "gnome-terminal -- journalctl -f"
+
+      14:
+        label: "Clear Cache"
+        text: "clear\ncache"
+        action:
+          type: multi
+          actions:
+            - type: command
+              command: "rm -rf ~/.cache/npm"
+            - type: command
+              command: "notify-send 'Cache Cleared' 'NPM cache has been cleared'"
+
+      15:
+        label: "Back"
+        text: "← MAIN"
+        style: "active"
+        action:
+          type: page
+          page: "main"
+
+# Button press feedback
+feedback:
+  visual: true  # Flash button on press
+  haptic: false  # Not supported on all models
