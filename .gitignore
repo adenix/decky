@@ -52,6 +52,14 @@ configs/*.backup
 # Test files
 test_*.yaml
 scratch/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
 # System
 Thumbs.db
