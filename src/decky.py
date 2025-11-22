@@ -33,6 +33,8 @@ class DeckyController:
         self.button_states = {}
         self.styles = self.config.get("styles", {})
         self.pages = self.config.get("pages", {})
+        self.animated_buttons = {}  # Store animated GIF data: {key: {'frames': [...], 'current': 0, 'durations': []}}
+        self.animation_counter = 0
 
     def _load_config(self) -> Dict:
         """Load YAML configuration file"""
@@ -70,7 +72,49 @@ class DeckyController:
         logger.info(f"Connected to {self.deck.deck_type()} with {self.deck.key_count()} keys")
         return True
 
-    def _create_button_image(self, button_config: Dict) -> Image:
+    def _setup_animated_button(self, key_index: int, button_config: Dict, icon_file: str):
+        """Set up animated GIF frames for a button"""
+        try:
+            gif = Image.open(icon_file)
+            if hasattr(gif, 'is_animated') and gif.is_animated:
+                frames = []
+                durations = []
+
+                for frame_num in range(gif.n_frames):
+                    gif.seek(frame_num)
+                    frame = gif.copy()
+                    frames.append(frame)
+                    durations.append(gif.info.get('duration', 100))
+
+                if frames:
+                    self.animated_buttons[key_index] = {
+                        'frames': frames,
+                        'durations': durations,
+                        'current_frame': 0,
+                        'last_update': time.time(),
+                        'config': button_config
+                    }
+                    logger.info(f"Loaded {len(frames)} frames for animated button {key_index+1}")
+        except Exception as e:
+            logger.warning(f"Failed to load animated GIF {icon_file}: {e}")
+
+    def _update_animations(self):
+        """Update animated buttons"""
+        current_time = time.time()
+
+        for key_index, anim_data in self.animated_buttons.items():
+            # Check if it's time to advance to next frame
+            frame_duration = anim_data['durations'][anim_data['current_frame']] / 1000.0  # Convert ms to seconds
+            if current_time - anim_data['last_update'] >= frame_duration:
+                # Advance to next frame
+                anim_data['current_frame'] = (anim_data['current_frame'] + 1) % len(anim_data['frames'])
+                anim_data['last_update'] = current_time
+
+                # Update button image with new frame
+                image = self._create_button_image(anim_data['config'], key_index)
+                self.deck.set_key_image(key_index, image)
+
+    def _create_button_image(self, button_config: Dict, key_index: int = None) -> Image:
         """Create button image from configuration"""
         # Get button dimensions
         image_size = self.deck.key_image_format()['size']
@@ -86,53 +130,66 @@ class DeckyController:
         # Load icon if specified
         icon_path = button_config.get("icon")
         icon_loaded = False
+        icon = None
+
         if icon_path:
-            icon_file = self._find_icon(icon_path)
-            if icon_file and os.path.exists(icon_file):
-                try:
-                    icon = Image.open(icon_file)
+            # Check if this is an animated button and use current frame
+            if key_index is not None and key_index in self.animated_buttons:
+                anim_data = self.animated_buttons[key_index]
+                icon = anim_data['frames'][anim_data['current_frame']].copy()
+                icon_loaded = True
+            else:
+                icon_file = self._find_icon(icon_path)
+                if icon_file and os.path.exists(icon_file):
+                    try:
+                        # For static images and non-animated GIFs
+                        icon = Image.open(icon_file)
+                        icon_loaded = True
+                    except Exception as e:
+                        logger.warning(f"Failed to load icon {icon_file}: {e}")
 
-                    # Icon always fills the entire button
-                    target_size = image_size  # Use full button size
-                    y_offset = 0
+        if icon_loaded and icon:
+            try:
+                # Icon always fills the entire button
+                target_size = image_size  # Use full button size
+                y_offset = 0
 
-                    # Convert RGBA to RGB if needed (for transparency handling)
-                    if icon.mode == 'RGBA':
-                        # Create a new image with the background color and paste the icon
-                        temp = Image.new('RGB', icon.size, bg_color)
-                        temp.paste(icon, (0, 0), icon)
-                        icon = temp
+                # Convert RGBA to RGB if needed (for transparency handling)
+                if icon.mode == 'RGBA':
+                    # Create a new image with the background color and paste the icon
+                    temp = Image.new('RGB', icon.size, bg_color)
+                    temp.paste(icon, (0, 0), icon)
+                    icon = temp
 
-                    # Calculate scale to fill button completely
-                    # Scale based on the dimension that needs less scaling (to fill whole button)
-                    scale_w = target_size[0] / icon.width
-                    scale_h = target_size[1] / icon.height
-                    scale = max(scale_w, scale_h)  # Use max to ensure full coverage
+                # Calculate scale to fill button completely
+                # Scale based on the dimension that needs less scaling (to fill whole button)
+                scale_w = target_size[0] / icon.width
+                scale_h = target_size[1] / icon.height
+                scale = max(scale_w, scale_h)  # Use max to ensure full coverage
 
-                    # Resize the icon
-                    new_size = (int(icon.width * scale), int(icon.height * scale))
-                    icon = icon.resize(new_size, Image.Resampling.LANCZOS)
+                # Resize the icon
+                new_size = (int(icon.width * scale), int(icon.height * scale))
+                icon = icon.resize(new_size, Image.Resampling.LANCZOS)
 
-                    # Crop to fit if oversized (center crop)
-                    if icon.width > target_size[0] or icon.height > target_size[1]:
-                        left = (icon.width - target_size[0]) // 2
-                        top = (icon.height - target_size[1]) // 2
-                        right = left + target_size[0]
-                        bottom = top + target_size[1]
-                        icon = icon.crop((left, top, right, bottom))
+                # Crop to fit if oversized (center crop)
+                if icon.width > target_size[0] or icon.height > target_size[1]:
+                    left = (icon.width - target_size[0]) // 2
+                    top = (icon.height - target_size[1]) // 2
+                    right = left + target_size[0]
+                    bottom = top + target_size[1]
+                    icon = icon.crop((left, top, right, bottom))
 
-                    # Paste icon centered (or at 0,0 if full size)
-                    if icon.size == target_size:
-                        icon_pos = (0, 0)  # Full button coverage
-                    else:
-                        icon_pos = ((image_size[0] - icon.width) // 2,
-                                   (image_size[1] - icon.height) // 2 + y_offset)
+                # Paste icon centered (or at 0,0 if full size)
+                if icon.size == target_size:
+                    icon_pos = (0, 0)  # Full button coverage
+                else:
+                    icon_pos = ((image_size[0] - icon.width) // 2,
+                               (image_size[1] - icon.height) // 2 + y_offset)
 
-                    # Paste the icon (already converted to RGB if needed)
-                    image.paste(icon, icon_pos)
-                    icon_loaded = True
-                except Exception as e:
-                    logger.warning(f"Failed to load icon {icon_file}: {e}")
+                # Paste the icon (already converted to RGB if needed)
+                image.paste(icon, icon_pos)
+            except Exception as e:
+                logger.warning(f"Failed to process icon: {e}")
 
         # Draw text (overlay on icon if present)
         text = button_config.get("text") or button_config.get("label", "")
@@ -247,6 +304,9 @@ class DeckyController:
         page_config = self.pages.get(self.current_page, {})
         buttons = page_config.get("buttons", {})
 
+        # Clear animated buttons when changing pages
+        self.animated_buttons.clear()
+
         # Clear all buttons first
         for key in range(self.deck.key_count()):
             self.deck.set_key_image(key, PILHelper.to_native_format(
@@ -260,10 +320,25 @@ class DeckyController:
                 # Stream Deck uses 0-based indexing
                 key_index = int(button_num) - 1
                 if 0 <= key_index < self.deck.key_count():
-                    image = self._create_button_image(button_config)
+                    # Check if this is an animated GIF
+                    icon_path = button_config.get("icon", "")
+                    if icon_path:
+                        icon_file = self._find_icon(icon_path)
+                        if icon_file and icon_file.lower().endswith('.gif'):
+                            # Try to load animated frames
+                            self._setup_animated_button(key_index, button_config, icon_file)
+
+                    # Create and set initial image
+                    image = self._create_button_image(button_config, key_index)
                     self.deck.set_key_image(key_index, image)
             except Exception as e:
                 logger.error(f"Failed to update button {button_num}: {e}")
+
+        # Synchronize all animated buttons to start at the same time
+        current_time = time.time()
+        for anim_data in self.animated_buttons.values():
+            anim_data['last_update'] = current_time
+            anim_data['current_frame'] = 0
 
     def _key_change_callback(self, deck, key, state):
         """Handle button press events"""
@@ -413,7 +488,11 @@ class DeckyController:
                 except:
                     pass
 
-                time.sleep(1)
+                # Update animated buttons
+                if self.animated_buttons:
+                    self._update_animations()
+
+                time.sleep(0.05)  # 50ms update rate for smooth animations
 
         except KeyboardInterrupt:
             logger.info("Shutting down...")
