@@ -28,7 +28,7 @@ While there are several Stream Deck solutions for Linux (streamdeck-ui, streamde
 
 ### Prerequisites
 
-- Linux (tested on Ubuntu, Fedora, Arch)
+- Linux (tested on Ubuntu/KDE, Fedora, Arch)
 - Python 3.7+
 - Stream Deck device
 
@@ -39,12 +39,31 @@ While there are several Stream Deck solutions for Linux (streamdeck-ui, streamde
 git clone https://github.com/yourusername/decky.git
 cd decky
 
-# Run setup script (requires sudo)
+# Run setup script (requires sudo for udev rules)
 chmod +x setup.sh
 sudo ./setup.sh
 
-# Start Decky
-decky
+# Install as a service (recommended)
+./install-service.sh
+
+# Start the service
+systemctl --user start decky
+```
+
+### Install as Auto-Start Service (Recommended)
+
+```bash
+# Run the service installer
+./install-service.sh
+
+# This will:
+# - Create ~/.decky/configs/ for your configurations
+# - Install systemd user service for auto-start on login
+# - Enable the service to run automatically
+# - Copy example configs to get you started
+
+# Start using Decky
+systemctl --user start decky
 ```
 
 ### Manual Installation
@@ -53,29 +72,57 @@ If you prefer manual installation:
 
 ```bash
 # Install system dependencies (Ubuntu/Debian)
-sudo apt-get install python3-pip libhidapi-libusb0 xdotool
+sudo apt-get install python3-pip python3-venv libhidapi-libusb0 xdotool
 
-# Install Python packages
-pip3 install streamdeck pyyaml pillow
+# Create virtual environment
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
 
-# Add udev rules for Stream Deck access (see setup.sh for rules)
-sudo cp udev/70-streamdeck.rules /etc/udev/rules.d/
+# Add udev rules for Stream Deck access
+sudo cp /etc/udev/rules.d/70-streamdeck.rules
 sudo udevadm control --reload-rules
+
+# Run directly
+./run.sh
 ```
 
 ## Usage
 
-### Basic Usage
+### Service Management with deckyctl
+
+When installed as a service, use `deckyctl` to manage Decky:
+
+```bash
+# Control commands
+deckyctl start          # Start the service
+deckyctl stop           # Stop the service
+deckyctl restart        # Restart the service
+deckyctl status         # Check service status
+deckyctl logs           # View live logs
+
+# Configuration management
+deckyctl edit           # Edit current config (auto-reloads)
+deckyctl list           # List available configs
+deckyctl use kde        # Switch to different config
+deckyctl validate       # Validate current config
+
+# Create and use custom configs
+cp ~/.decky/configs/default.yaml ~/.decky/configs/work.yaml
+deckyctl edit work
+deckyctl use work
+```
+
+### Direct Usage (without service)
 
 ```bash
 # Run with example config
-decky
+./run.sh
 
 # Run with custom config
-decky ~/my-streamdeck-config.yaml
+./run.sh configs/kde.yaml
 
 # Run with debug logging
-decky --log-level DEBUG
+./run.sh configs/minimal.yaml --log-level DEBUG
 ```
 
 ### Configuration Structure
@@ -228,49 +275,57 @@ buttons:
 ## Tips and Tricks
 
 ### Multiple Configurations
+
+With the service setup, switching between configs is easy:
+
 ```bash
-# Work setup
-decky configs/work.yaml
+# List available configs
+deckyctl list
 
-# Gaming setup
-decky configs/gaming.yaml
+# Switch between configs instantly
+deckyctl use work      # Work setup
+deckyctl use gaming    # Gaming setup
+deckyctl use streaming  # Streaming setup
 
-# Streaming setup
-decky configs/streaming.yaml
+# Edit any config
+deckyctl edit work
+```
+
+### Configuration Location
+
+When installed as a service, configs are stored in `~/.decky/configs/`:
+```
+~/.decky/configs/
+├── default.yaml    # Default config
+├── kde.yaml        # KDE-specific config
+├── work.yaml       # Your work config
+├── gaming.yaml     # Gaming config
+└── streaming.yaml  # Streaming config
 ```
 
 ### Git Integration
-```yaml
-# Add to your dotfiles repo
+
+Keep your configs in version control:
+```bash
+# Add configs to your dotfiles repo
 cd ~/dotfiles
-cp -r /path/to/decky/configs/example.yaml streamdeck.yaml
-git add streamdeck.yaml
-git commit -m "Add Stream Deck configuration"
+ln -s ~/.decky/configs decky-configs
+git add decky-configs
+git commit -m "Add Stream Deck configurations"
 ```
 
-### Systemd Service
-Create a service to run Decky at startup:
+### Service Auto-Start
+
+The service is automatically installed as a user service that starts on login:
 ```bash
-# Create service file
-sudo nano /etc/systemd/system/decky.service
+# Service is managed with systemctl --user commands
+systemctl --user status decky   # Check status
+systemctl --user enable decky   # Enable auto-start (done by installer)
+systemctl --user disable decky  # Disable auto-start
 
-# Add:
-[Unit]
-Description=Decky Stream Deck Controller
-After=graphical.target
-
-[Service]
-Type=simple
-User=yourusername
-ExecStart=/usr/local/bin/decky /home/yourusername/decky-config.yaml
-Restart=on-failure
-
-[Install]
-WantedBy=default.target
-
-# Enable service
-sudo systemctl enable decky
-sudo systemctl start decky
+# Or use deckyctl
+deckyctl enable   # Enable auto-start
+deckyctl disable  # Disable auto-start
 ```
 
 ## Troubleshooting
