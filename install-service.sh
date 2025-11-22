@@ -47,8 +47,8 @@ Environment="DISPLAY=:0"
 Environment="XAUTHORITY=%h/.Xauthority"
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 
-# Use the virtual environment Python
-ExecStart=$DECKY_DIR/.venv/bin/python $DECKY_DIR/src/decky.py %h/.decky/configs/default.yaml
+# Use the virtual environment Python with config validation
+ExecStart=$DECKY_DIR/.venv/bin/python $DECKY_DIR/src/decky_launcher.py %h/.decky/configs/default.yaml
 
 # Logging
 StandardOutput=journal

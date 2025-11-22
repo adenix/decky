@@ -56,3 +56,6 @@ scratch/
 # System
 Thumbs.db
 .directory
+
+# Claude settings
+.claude/
