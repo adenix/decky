@@ -19,6 +19,16 @@ from io import BytesIO
 from StreamDeck.DeviceManager import DeviceManager
 from StreamDeck.ImageHelpers import PILHelper
 
+# D-Bus for screen lock monitoring (optional)
+try:
+    import dbus
+    from dbus.mainloop.glib import DBusGMainLoop
+    from gi.repository import GLib
+    DBUS_AVAILABLE = True
+except ImportError:
+    DBUS_AVAILABLE = False
+    logging.warning("D-Bus support not available. Screen lock detection disabled.")
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,6 +45,9 @@ class DeckyController:
         self.pages = self.config.get("pages", {})
         self.animated_buttons = {}  # Store animated GIF data: {key: {'frames': [...], 'current': 0, 'durations': []}}
         self.animation_counter = 0
+        self.is_locked = False  # Track screen lock state
+        self.lock_monitor_thread = None
+        self.dbus_session = None
 
     def _load_config(self) -> Dict:
         """Load YAML configuration file"""
@@ -100,6 +113,9 @@ class DeckyController:
 
     def _update_animations(self):
         """Update animated buttons"""
+        if not self.deck:
+            return  # Skip if deck is disconnected
+
         current_time = time.time()
 
         for key_index, anim_data in self.animated_buttons.items():
@@ -301,6 +317,9 @@ class DeckyController:
 
     def _update_page(self):
         """Update all buttons for current page"""
+        if not self.deck:
+            return  # Skip if deck is disconnected
+
         page_config = self.pages.get(self.current_page, {})
         buttons = page_config.get("buttons", {})
 
@@ -345,6 +364,11 @@ class DeckyController:
         logger.debug(f"Button {key} {'pressed' if state else 'released'}")
 
         if not state:  # Button released
+            return
+
+        # Ignore button presses when screen is locked
+        if self.is_locked:
+            logger.debug(f"Ignoring button press - screen is locked")
             return
 
         # Get button configuration (convert 0-based to 1-based)
@@ -464,10 +488,135 @@ class DeckyController:
         except Exception as e:
             logger.error(f"Failed to send keypress: {e}")
 
+    def _blank_deck(self):
+        """Disconnect from Stream Deck to let it go to screensaver"""
+        if not self.deck:
+            return
+
+        logger.info("Disconnecting Stream Deck (screen locked)")
+        try:
+            # Clear animated buttons to free memory
+            self.animated_buttons.clear()
+
+            # Reset and close the deck to let it go to screensaver
+            self.deck.reset()
+            self.deck.close()
+            self.deck = None
+        except Exception as e:
+            logger.error(f"Error disconnecting Stream Deck: {e}")
+
+    def _restore_deck(self):
+        """Reconnect to Stream Deck after unlock"""
+        logger.info("Reconnecting to Stream Deck (screen unlocked)")
+
+        # Reconnect to the Stream Deck
+        if self.connect():
+            # Restore current page
+            self._update_page()
+        else:
+            logger.error("Failed to reconnect to Stream Deck after unlock")
+
+    def _check_screen_lock(self):
+        """Check if screen is currently locked using D-Bus or qdbus6"""
+        # Try D-Bus first if available
+        if DBUS_AVAILABLE:
+            try:
+                bus = dbus.SessionBus()
+                screensaver = bus.get_object('org.freedesktop.ScreenSaver', '/ScreenSaver')
+                interface = dbus.Interface(screensaver, 'org.freedesktop.ScreenSaver')
+                return interface.GetActive()
+            except Exception as e:
+                logger.debug(f"Could not check screen lock status via D-Bus: {e}")
+
+        # Fallback to qdbus6 command
+        try:
+            result = subprocess.run(
+                ["qdbus6", "org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver.GetActive"],
+                capture_output=True,
+                text=True,
+                timeout=1
+            )
+            return result.stdout.strip().lower() == 'true'
+        except Exception as e:
+            logger.debug(f"Could not check screen lock status via qdbus6: {e}")
+            return False
+
+    def _monitor_screen_lock(self):
+        """Monitor screen lock/unlock events in a separate thread"""
+        def monitor_loop():
+            """Poll for screen lock status changes"""
+            logger.info("Screen lock monitoring started (polling mode)")
+            last_state = self.is_locked
+
+            while True:
+                try:
+                    current_state = self._check_screen_lock()
+                    if current_state != last_state:
+                        self._on_screen_lock_changed(current_state)
+                        last_state = current_state
+                except Exception as e:
+                    logger.debug(f"Error checking screen lock: {e}")
+
+                time.sleep(1)  # Check every second
+
+        # If D-Bus is available, try to use it for real-time monitoring
+        if DBUS_AVAILABLE:
+            try:
+                def run_dbus_loop():
+                    try:
+                        DBusGMainLoop(set_as_default=True)
+                        bus = dbus.SessionBus()
+
+                        # Connect to ScreenSaver signal
+                        bus.add_signal_receiver(
+                            self._on_screen_lock_changed,
+                            dbus_interface='org.freedesktop.ScreenSaver',
+                            signal_name='ActiveChanged'
+                        )
+
+                        # Check initial state
+                        initial_locked = self._check_screen_lock()
+                        if initial_locked != self.is_locked:
+                            self._on_screen_lock_changed(initial_locked)
+
+                        # Run the GLib main loop
+                        loop = GLib.MainLoop()
+                        logger.info("Screen lock monitoring started (D-Bus mode)")
+                        loop.run()
+                    except Exception as e:
+                        logger.warning(f"D-Bus monitoring failed, falling back to polling: {e}")
+                        monitor_loop()
+
+                # Start D-Bus monitoring in a separate thread
+                self.lock_monitor_thread = threading.Thread(target=run_dbus_loop, daemon=True)
+                self.lock_monitor_thread.start()
+            except Exception as e:
+                logger.warning(f"Failed to start D-Bus monitoring, using polling: {e}")
+                self.lock_monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
+                self.lock_monitor_thread.start()
+        else:
+            # Fallback to polling
+            logger.info("D-Bus not available, using polling for screen lock detection")
+            self.lock_monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
+            self.lock_monitor_thread.start()
+
+    def _on_screen_lock_changed(self, active):
+        """Handle screen lock state changes"""
+        logger.info(f"Screen lock state changed: {'locked' if active else 'unlocked'}")
+        self.is_locked = active
+
+        if active:
+            self._blank_deck()
+        else:
+            self._restore_deck()
+
     def run(self):
         """Main run loop"""
         if not self.connect():
             return
+
+        # Start screen lock monitoring
+        self._monitor_screen_lock()
 
         # Initial page update
         self._update_page()
