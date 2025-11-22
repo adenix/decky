@@ -48,6 +48,8 @@ class DeckyController:
         self.is_locked = False  # Track screen lock state
         self.lock_monitor_thread = None
         self.dbus_session = None
+        self.last_connect_attempt = 0  # Track reconnection attempts
+        self.reconnect_delay = 5  # Seconds between reconnection attempts
 
     def _load_config(self) -> Dict:
         """Load YAML configuration file"""
@@ -65,25 +67,67 @@ class DeckyController:
 
     def connect(self) -> bool:
         """Connect to Stream Deck device"""
-        decks = DeviceManager().enumerate()
+        try:
+            decks = DeviceManager().enumerate()
 
-        if not decks:
-            logger.error("No Stream Deck devices found")
+            if not decks:
+                logger.debug("No Stream Deck devices found")
+                return False
+
+            self.deck = decks[0]
+            self.deck.open()
+            self.deck.reset()
+
+            # Set brightness
+            brightness = self.config.get("device", {}).get("brightness", 75)
+            self.deck.set_brightness(brightness)
+
+            # Set up key callback
+            self.deck.set_key_callback(self._key_change_callback)
+
+            logger.info(f"Connected to {self.deck.deck_type()} with {self.deck.key_count()} keys")
+            self.last_connect_attempt = time.time()
+            return True
+        except Exception as e:
+            logger.debug(f"Failed to connect to Stream Deck: {e}")
+            self.deck = None
             return False
 
-        self.deck = decks[0]
-        self.deck.open()
-        self.deck.reset()
+    def is_connected(self) -> bool:
+        """Check if Stream Deck is still connected"""
+        if not self.deck:
+            return False
 
-        # Set brightness
-        brightness = self.config.get("device", {}).get("brightness", 75)
-        self.deck.set_brightness(brightness)
+        try:
+            # Try to access deck properties to verify connection
+            _ = self.deck.is_visual()
+            return True
+        except Exception:
+            # Device is no longer accessible
+            logger.info("Stream Deck disconnected (device unplugged)")
+            self.deck = None
+            return False
 
-        # Set up key callback
-        self.deck.set_key_callback(self._key_change_callback)
+    def attempt_reconnect(self) -> bool:
+        """Attempt to reconnect to Stream Deck if disconnected"""
+        current_time = time.time()
 
-        logger.info(f"Connected to {self.deck.deck_type()} with {self.deck.key_count()} keys")
-        return True
+        # Don't attempt reconnection if screen is locked
+        if self.is_locked:
+            return False
+
+        # Don't attempt too frequently
+        if current_time - self.last_connect_attempt < self.reconnect_delay:
+            return False
+
+        logger.debug("Checking for Stream Deck...")
+        if self.connect():
+            logger.info("Stream Deck reconnected!")
+            self._update_page()
+            return True
+
+        self.last_connect_attempt = current_time
+        return False
 
     def _setup_animated_button(self, key_index: int, button_config: Dict, icon_file: str):
         """Set up animated GIF frames for a button"""
@@ -612,14 +656,16 @@ class DeckyController:
 
     def run(self):
         """Main run loop"""
-        if not self.connect():
-            return
+        # Try initial connection but don't exit if it fails
+        # (device might be unplugged initially)
+        connected = self.connect()
+        if connected:
+            self._update_page()
+        else:
+            logger.info("Stream Deck not found. Will keep trying to connect...")
 
         # Start screen lock monitoring
         self._monitor_screen_lock()
-
-        # Initial page update
-        self._update_page()
 
         # Set up config file watcher
         config_mtime = os.path.getmtime(self.config_path)
@@ -628,6 +674,17 @@ class DeckyController:
 
         try:
             while True:
+                # Check if device is still connected or attempt reconnection
+                if not self.deck:
+                    # Not connected, try to reconnect
+                    if not self.is_locked:  # Only try if screen isn't locked
+                        self.attempt_reconnect()
+                elif not self.is_connected():
+                    # Was connected but now disconnected
+                    logger.info("Stream Deck was unplugged")
+                    self.deck = None
+                    # Will attempt reconnection on next loop
+
                 # Check for config file changes
                 try:
                     current_mtime = os.path.getmtime(self.config_path)
@@ -637,8 +694,8 @@ class DeckyController:
                 except:
                     pass
 
-                # Update animated buttons
-                if self.animated_buttons:
+                # Update animated buttons (only if connected)
+                if self.deck and self.animated_buttons:
                     self._update_animations()
 
                 time.sleep(0.05)  # 50ms update rate for smooth animations
@@ -648,8 +705,11 @@ class DeckyController:
 
         finally:
             if self.deck:
-                self.deck.reset()
-                self.deck.close()
+                try:
+                    self.deck.reset()
+                    self.deck.close()
+                except:
+                    pass  # Device might already be disconnected
 
 
 def main():
