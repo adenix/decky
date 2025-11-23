@@ -34,7 +34,7 @@ class KDEPlatform(Platform):
         try:
             result = subprocess.run(["pgrep", "-x", "plasmashell"], capture_output=True)
             return result.returncode == 0
-        except:
+        except Exception:
             pass
 
         return False
@@ -131,7 +131,7 @@ class KDEPlatform(Platform):
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=1)
                 if result.returncode == 0:
                     return result.stdout.strip().lower() == "true"
-            except:
+            except Exception:
                 continue
 
         # Fallback to loginctl
@@ -144,7 +144,7 @@ class KDEPlatform(Platform):
             )
             if result.returncode == 0 and "LockedHint=yes" in result.stdout:
                 return True
-        except:
+        except Exception:
             pass
 
         return False

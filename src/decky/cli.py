@@ -151,10 +151,10 @@ class DeckyCLI:
                     if "ExecStart=" in line and ".yaml" in line:
                         # Extract the config file name
                         parts = line.split("configs/")
-                        if len(parts) > 1:
-                            active_config = parts[1].split(".yaml")[0]
-                            break
-            except:
+                    if len(parts) > 1:
+                        active_config = parts[1].split(".yaml")[0]
+                        break
+            except Exception:
                 pass
 
         # List all yaml files

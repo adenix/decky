@@ -53,13 +53,12 @@ class ActionRegistry:
         """Auto-discover and register all action modules"""
         import importlib
         import pkgutil
-        import sys
 
         # Import the actions package
         import decky.actions as actions_pkg
 
         # Discover all modules in the actions package
-        for importer, modname, ispkg in pkgutil.iter_modules(actions_pkg.__path__):
+        for _importer, modname, _ispkg in pkgutil.iter_modules(actions_pkg.__path__):
             if modname in ["base", "registry", "__init__"]:
                 continue
 
