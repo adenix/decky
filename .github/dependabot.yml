@@ -9,7 +9,7 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-  
+
   # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"

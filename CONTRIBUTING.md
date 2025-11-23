@@ -125,34 +125,34 @@ from typing import Dict, Any, Optional
 class MyAction(BaseAction):
     """
     Brief description of the action.
-    
+
     Longer description if needed, explaining the purpose
     and any important details.
     """
-    
+
     action_type = "my_action"
-    
+
     def execute(self, context: ActionContext, config: Dict[str, Any]) -> bool:
         """
         Execute the action.
-        
+
         Args:
             context: Execution context with controller and platform info
             config: Action configuration from YAML
-            
+
         Returns:
             True if successful, False otherwise
         """
         # Implementation
         return True
-    
+
     def validate_config(self, config: Dict[str, Any]) -> bool:
         """
         Validate action configuration.
-        
+
         Args:
             config: Configuration to validate
-            
+
         Returns:
             True if valid, False otherwise
         """
@@ -223,7 +223,7 @@ from typing import Dict, Any
 
 class MyAction(BaseAction):
     action_type = "my_action"
-    
+
     def execute(self, context: ActionContext, config: Dict[str, Any]) -> bool:
         # Your implementation
         return True

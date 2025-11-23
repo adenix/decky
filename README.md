@@ -4,7 +4,7 @@
 [![Code Quality](https://github.com/anicholas/decky/workflows/Code%20Quality/badge.svg)](https://github.com/anicholas/decky/actions/workflows/lint.yml)
 [![Security](https://github.com/anicholas/decky/workflows/Security/badge.svg)](https://github.com/anicholas/decky/actions/workflows/security.yml)
 [![codecov](https://codecov.io/gh/anicholas/decky/branch/main/graph/badge.svg)](https://codecov.io/gh/anicholas/decky)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -37,7 +37,7 @@ While there are several Stream Deck solutions for Linux (streamdeck-ui, streamde
 ### Prerequisites
 
 - Linux (tested on Ubuntu/KDE, Fedora, Arch)
-- Python 3.7+
+- Python 3.10+
 - Stream Deck device
 
 ### Quick Setup
