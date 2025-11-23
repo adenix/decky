@@ -8,12 +8,10 @@ This module provides both the daemon entry point and service management commands
 import argparse
 import logging
 import os
-import signal
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import List, Optional
 
 import yaml
 
