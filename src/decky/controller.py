@@ -2,21 +2,21 @@
 Main controller for Decky Stream Deck
 """
 
+import logging
 import os
 import sys
-import time
 import threading
-import logging
+import time
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from PIL import Image
 
-
+from .actions.base import ActionContext
+from .actions.registry import registry
 from .config.loader import ConfigLoader
 from .device.manager import DeviceManager as DeckManager
 from .device.renderer import ButtonRenderer
-from .actions.registry import registry
-from .actions.base import ActionContext
 from .platforms import detect_platform
 
 logger = logging.getLogger(__name__)
@@ -140,11 +140,7 @@ class DeckyController:
         # Execute action using the registry
         action = registry.get_action(action_type)
         if action:
-            context = ActionContext(
-                controller=self,
-                button_config=button_config,
-                key_index=key
-            )
+            context = ActionContext(controller=self, button_config=button_config, key_index=key)
 
             # Handle page switching specially
             if action_type == "page":
@@ -185,7 +181,7 @@ class DeckyController:
             if button_config:
                 # Check for animations
                 icon_path = button_config.get("icon")
-                if icon_path and icon_path.lower().endswith('.gif'):
+                if icon_path and icon_path.lower().endswith(".gif"):
                     # Set up animated GIF
                     icon_file = self._find_icon(icon_path)
                     if icon_file:
@@ -198,17 +194,13 @@ class DeckyController:
                     else:
                         # GIF not found, render static
                         image = self.button_renderer.render_button(
-                            button_config,
-                            self.config.get("styles", {}),
-                            self.deck
+                            button_config, self.config.get("styles", {}), self.deck
                         )
                         self.deck.set_key_image(key, image)
                 else:
                     # Static image
                     image = self.button_renderer.render_button(
-                        button_config,
-                        self.config.get("styles", {}),
-                        self.deck
+                        button_config, self.config.get("styles", {}), self.deck
                     )
                     self.deck.set_key_image(key, image)
 
@@ -217,8 +209,8 @@ class DeckyController:
         if self.animated_buttons:
             current_time = time.time()
             for anim_data in self.animated_buttons.values():
-                anim_data['last_update'] = current_time
-                anim_data['current_frame'] = 0
+                anim_data["last_update"] = current_time
+                anim_data["current_frame"] = 0
             logger.debug(f"Synchronized {len(self.animated_buttons)} animated buttons")
 
     def _find_icon(self, icon_path: str) -> Optional[str]:
@@ -246,7 +238,7 @@ class DeckyController:
         """Set up animated GIF frames for a button."""
         try:
             gif = Image.open(icon_file)
-            if hasattr(gif, 'is_animated') and gif.is_animated:
+            if hasattr(gif, "is_animated") and gif.is_animated:
                 frames = []
                 durations = []
 
@@ -254,15 +246,15 @@ class DeckyController:
                     gif.seek(frame_num)
                     frame = gif.copy()
                     frames.append(frame)
-                    durations.append(gif.info.get('duration', 100))
+                    durations.append(gif.info.get("duration", 100))
 
                 if frames:
                     self.animated_buttons[key_index] = {
-                        'frames': frames,
-                        'durations': durations,
-                        'current_frame': 0,
-                        'last_update': time.time(),
-                        'config': button_config
+                        "frames": frames,
+                        "durations": durations,
+                        "current_frame": 0,
+                        "last_update": time.time(),
+                        "config": button_config,
                     }
                     logger.debug(f"Loaded {len(frames)} frames for animated button {key_index+1}")
         except Exception as e:
@@ -274,15 +266,12 @@ class DeckyController:
             return None
 
         anim_data = self.animated_buttons[key_index]
-        frame = anim_data['frames'][anim_data['current_frame']]
-        button_config = anim_data['config']
+        frame = anim_data["frames"][anim_data["current_frame"]]
+        button_config = anim_data["config"]
 
         # Use button renderer to create the image with the current frame
         return self.button_renderer.render_button_with_icon(
-            button_config,
-            self.config.get("styles", {}),
-            self.deck,
-            frame
+            button_config, self.config.get("styles", {}), self.deck, frame
         )
 
     def _update_animations(self):
@@ -295,11 +284,15 @@ class DeckyController:
         # Create a copy of keys to avoid dictionary change during iteration
         for key_index, anim_data in list(self.animated_buttons.items()):
             # Check if it's time to advance to next frame
-            frame_duration = anim_data['durations'][anim_data['current_frame']] / 1000.0  # Convert ms to seconds
-            if current_time - anim_data['last_update'] >= frame_duration:
+            frame_duration = (
+                anim_data["durations"][anim_data["current_frame"]] / 1000.0
+            )  # Convert ms to seconds
+            if current_time - anim_data["last_update"] >= frame_duration:
                 # Advance to next frame
-                anim_data['current_frame'] = (anim_data['current_frame'] + 1) % len(anim_data['frames'])
-                anim_data['last_update'] = current_time
+                anim_data["current_frame"] = (anim_data["current_frame"] + 1) % len(
+                    anim_data["frames"]
+                )
+                anim_data["last_update"] = current_time
 
                 # Update button image with new frame
                 frame_image = self._render_animated_frame(key_index)
@@ -377,9 +370,7 @@ class DeckyController:
 
         # Start screen lock monitoring in background
         self.lock_monitor_thread = threading.Thread(
-            target=self._monitor_screen_lock,
-            daemon=True,
-            name="ScreenLockMonitor"
+            target=self._monitor_screen_lock, daemon=True, name="ScreenLockMonitor"
         )
         self.lock_monitor_thread.start()
         logger.debug("Screen lock monitoring started")

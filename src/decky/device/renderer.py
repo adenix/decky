@@ -2,9 +2,10 @@
 Button rendering for Stream Deck
 """
 
-import os
 import logging
-from typing import Dict, Any, Optional
+import os
+from typing import Any, Dict, Optional
+
 from PIL import Image, ImageDraw, ImageFont
 from StreamDeck.ImageHelpers import PILHelper
 
@@ -24,11 +25,11 @@ class ButtonRenderer:
         style = styles.get(style_name, styles.get("default", {}))
 
         # Get image dimensions
-        image_size = deck.key_image_format()['size']
+        image_size = deck.key_image_format()["size"]
 
         # Create base image
         bg_color = style.get("background_color", "#000000")
-        image = Image.new('RGB', image_size, bg_color)
+        image = Image.new("RGB", image_size, bg_color)
         draw = ImageDraw.Draw(image)
 
         # Check for icon
@@ -42,8 +43,8 @@ class ButtonRenderer:
                     icon = Image.open(icon_file)
 
                     # Handle transparency
-                    if icon.mode == 'RGBA':
-                        temp = Image.new('RGB', icon.size, bg_color)
+                    if icon.mode == "RGBA":
+                        temp = Image.new("RGB", icon.size, bg_color)
                         temp.paste(icon, (0, 0), icon)
                         icon = temp
 
@@ -64,8 +65,10 @@ class ButtonRenderer:
                         icon = icon.crop((left, top, right, bottom))
 
                     # Paste icon
-                    icon_pos = ((image_size[0] - icon.width) // 2,
-                               (image_size[1] - icon.height) // 2)
+                    icon_pos = (
+                        (image_size[0] - icon.width) // 2,
+                        (image_size[1] - icon.height) // 2,
+                    )
                     image.paste(icon, icon_pos)
                     icon_loaded = True
 
@@ -79,18 +82,20 @@ class ButtonRenderer:
 
         return PILHelper.to_native_format(deck, image)
 
-    def render_button_with_icon(self, button_config: Dict[str, Any], styles: Dict[str, Any], deck, icon_image: Image.Image) -> bytes:
+    def render_button_with_icon(
+        self, button_config: Dict[str, Any], styles: Dict[str, Any], deck, icon_image: Image.Image
+    ) -> bytes:
         """Render a button with a pre-loaded icon image (for animated frames)"""
         # Get button style
         style_name = button_config.get("style", "default")
         style = styles.get(style_name, styles.get("default", {}))
 
         # Get image dimensions
-        image_size = deck.key_image_format()['size']
+        image_size = deck.key_image_format()["size"]
 
         # Create base image
         bg_color = style.get("background_color", "#000000")
-        image = Image.new('RGB', image_size, bg_color)
+        image = Image.new("RGB", image_size, bg_color)
         draw = ImageDraw.Draw(image)
 
         # Process the provided icon image
@@ -100,8 +105,8 @@ class ButtonRenderer:
                 icon = icon_image.copy()
 
                 # Handle transparency
-                if icon.mode == 'RGBA':
-                    temp = Image.new('RGB', icon.size, bg_color)
+                if icon.mode == "RGBA":
+                    temp = Image.new("RGB", icon.size, bg_color)
                     temp.paste(icon, (0, 0), icon)
                     icon = temp
 
@@ -122,8 +127,7 @@ class ButtonRenderer:
                     icon = icon.crop((left, top, right, bottom))
 
                 # Paste icon
-                icon_pos = ((image_size[0] - icon.width) // 2,
-                           (image_size[1] - icon.height) // 2)
+                icon_pos = ((image_size[0] - icon.width) // 2, (image_size[1] - icon.height) // 2)
                 image.paste(icon, icon_pos)
                 icon_loaded = True
 
@@ -139,8 +143,8 @@ class ButtonRenderer:
 
     def render_blank(self, deck) -> bytes:
         """Render a blank button"""
-        image_size = deck.key_image_format()['size']
-        image = Image.new('RGB', image_size, 'black')
+        image_size = deck.key_image_format()["size"]
+        image = Image.new("RGB", image_size, "black")
         return PILHelper.to_native_format(deck, image)
 
     def _find_icon(self, icon_path: str) -> Optional[str]:
@@ -156,7 +160,7 @@ class ButtonRenderer:
         search_paths = [
             os.path.expanduser("~/.decky"),
             os.path.expanduser("~/.decky/icons"),
-            os.getcwd()
+            os.getcwd(),
         ]
 
         for base_path in search_paths:
@@ -166,7 +170,9 @@ class ButtonRenderer:
 
         return None
 
-    def _draw_text(self, draw, text: str, style: Dict[str, Any], image_size: tuple, icon_loaded: bool):
+    def _draw_text(
+        self, draw, text: str, style: Dict[str, Any], image_size: tuple, icon_loaded: bool
+    ):
         """Draw text on button"""
         font_name = style.get("font", "DejaVu Sans")
         font_size = style.get("font_size", 14)
@@ -178,7 +184,7 @@ class ButtonRenderer:
         font = self._load_font(font_name, font_size)
 
         # Process multi-line text
-        lines = text.split('\n')
+        lines = text.split("\n")
         total_text_height = len(lines) * (font_size + 2)
 
         # Calculate vertical position
@@ -205,8 +211,9 @@ class ButtonRenderer:
                 for dx in [-1, 0, 1]:
                     for dy in [-1, 0, 1]:
                         if dx != 0 or dy != 0:
-                            draw.text((text_x + dx, y_offset + dy), line,
-                                    font=font, fill=shadow_color)
+                            draw.text(
+                                (text_x + dx, y_offset + dy), line, font=font, fill=shadow_color
+                            )
 
             # Draw the actual text
             draw.text((text_x, y_offset), line, font=font, fill=text_color)
@@ -222,7 +229,7 @@ class ButtonRenderer:
         font = None
 
         # Try to load the specified font
-        if '/' in font_name or font_name.endswith('.ttf'):
+        if "/" in font_name or font_name.endswith(".ttf"):
             # It's a path
             font_path = os.path.expanduser(font_name)
             try:
@@ -236,7 +243,7 @@ class ButtonRenderer:
                 "/usr/share/fonts",
                 "/usr/local/share/fonts",
                 os.path.expanduser("~/.fonts"),
-                os.path.expanduser("~/.local/share/fonts")
+                os.path.expanduser("~/.local/share/fonts"),
             ]
 
             for font_dir in font_dirs:
@@ -245,8 +252,8 @@ class ButtonRenderer:
 
                 for root, dirs, files in os.walk(font_dir):
                     for file in files:
-                        if file.endswith(('.ttf', '.otf')):
-                            if font_name.lower().replace(' ', '') in file.lower().replace(' ', ''):
+                        if file.endswith((".ttf", ".otf")):
+                            if font_name.lower().replace(" ", "") in file.lower().replace(" ", ""):
                                 font_path = os.path.join(root, file)
                                 try:
                                     font = ImageFont.truetype(font_path, font_size)

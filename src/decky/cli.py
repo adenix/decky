@@ -5,21 +5,21 @@ Decky CLI - Unified command-line interface for Decky Stream Deck controller.
 This module provides both the daemon entry point and service management commands.
 """
 
-import sys
-import os
 import argparse
-import subprocess
-import signal
-import time
-import yaml
-from pathlib import Path
-from typing import Optional, List
 import logging
+import os
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import List, Optional
+
+import yaml
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -63,9 +63,7 @@ class DeckyCLI:
         """Start the Decky systemd service."""
         print("Starting Decky service...")
         result = subprocess.run(
-            ["systemctl", "--user", "start", self.service_name],
-            capture_output=True,
-            text=True
+            ["systemctl", "--user", "start", self.service_name], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -82,9 +80,7 @@ class DeckyCLI:
         """Stop the Decky systemd service."""
         print("Stopping Decky service...")
         result = subprocess.run(
-            ["systemctl", "--user", "stop", self.service_name],
-            capture_output=True,
-            text=True
+            ["systemctl", "--user", "stop", self.service_name], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -98,9 +94,7 @@ class DeckyCLI:
         """Restart the Decky systemd service."""
         print("Restarting Decky service...")
         result = subprocess.run(
-            ["systemctl", "--user", "restart", self.service_name],
-            capture_output=True,
-            text=True
+            ["systemctl", "--user", "restart", self.service_name], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -116,8 +110,7 @@ class DeckyCLI:
     def show_status(self) -> int:
         """Show the status of the Decky systemd service."""
         result = subprocess.run(
-            ["systemctl", "--user", "status", self.service_name, "--no-pager"],
-            text=True
+            ["systemctl", "--user", "status", self.service_name, "--no-pager"], text=True
         )
         return result.returncode
 
@@ -154,12 +147,12 @@ class DeckyCLI:
             try:
                 content = self.service_file.read_text()
                 # Extract config name from ExecStart line
-                for line in content.split('\n'):
-                    if 'ExecStart=' in line and '.yaml' in line:
+                for line in content.split("\n"):
+                    if "ExecStart=" in line and ".yaml" in line:
                         # Extract the config file name
-                        parts = line.split('configs/')
+                        parts = line.split("configs/")
                         if len(parts) > 1:
-                            active_config = parts[1].split('.yaml')[0]
+                            active_config = parts[1].split(".yaml")[0]
                             break
             except:
                 pass
@@ -188,7 +181,7 @@ class DeckyCLI:
             config_name: Name of the config file (without .yaml extension)
         """
         # Remove .yaml if provided
-        config_name = config_name.replace('.yaml', '')
+        config_name = config_name.replace(".yaml", "")
         config_file = self.configs_dir / f"{config_name}.yaml"
 
         if not config_file.exists():
@@ -198,7 +191,7 @@ class DeckyCLI:
             return 1
 
         # Get editor from environment or default to nano
-        editor = os.environ.get('EDITOR', 'nano')
+        editor = os.environ.get("EDITOR", "nano")
 
         print(f"Opening {config_file} in {editor}...")
         result = subprocess.run([editor, str(config_file)])
@@ -206,7 +199,7 @@ class DeckyCLI:
         if result.returncode == 0:
             print("\nConfiguration edited.")
             response = input("Restart Decky to apply changes? [Y/n] ")
-            if response.lower() != 'n':
+            if response.lower() != "n":
                 return self.restart_service()
 
         return result.returncode
@@ -219,7 +212,7 @@ class DeckyCLI:
             config_name: Name of the config file to use
         """
         # Remove .yaml if provided
-        config_name = config_name.replace('.yaml', '')
+        config_name = config_name.replace(".yaml", "")
         config_file = self.configs_dir / f"{config_name}.yaml"
 
         if not config_file.exists():
@@ -239,18 +232,18 @@ class DeckyCLI:
             content = self.service_file.read_text()
 
             # Replace the config path in ExecStart
-            lines = content.split('\n')
+            lines = content.split("\n")
             for i, line in enumerate(lines):
-                if line.startswith('ExecStart='):
+                if line.startswith("ExecStart="):
                     # Find and replace the config file path
-                    if 'configs/' in line:
-                        old_config = line.split('configs/')[1].split()[0]
+                    if "configs/" in line:
+                        old_config = line.split("configs/")[1].split()[0]
                         new_line = line.replace(old_config, f"{config_name}.yaml")
                         lines[i] = new_line
                         break
 
             # Write back the updated service file
-            self.service_file.write_text('\n'.join(lines))
+            self.service_file.write_text("\n".join(lines))
 
             # Reload systemd and restart service
             print(f"Switching to configuration: {config_name}")
@@ -270,7 +263,7 @@ class DeckyCLI:
             config_name: Name of the config file to validate
         """
         # Remove .yaml if provided
-        config_name = config_name.replace('.yaml', '')
+        config_name = config_name.replace(".yaml", "")
         config_file = self.configs_dir / f"{config_name}.yaml"
 
         if not config_file.exists():
@@ -280,7 +273,7 @@ class DeckyCLI:
         print(f"Validating {config_file}...")
 
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 config = yaml.safe_load(f)
 
             # Basic validation checks
@@ -288,40 +281,42 @@ class DeckyCLI:
             warnings = []
 
             # Check required sections
-            if 'pages' not in config:
+            if "pages" not in config:
                 errors.append("Missing required 'pages' section")
             else:
-                if 'main' not in config['pages']:
+                if "main" not in config["pages"]:
                     warnings.append("No 'main' page defined (will show blank screen)")
 
             # Check device settings
-            if 'device' in config:
-                brightness = config['device'].get('brightness', 75)
+            if "device" in config:
+                brightness = config["device"].get("brightness", 75)
                 if not 0 <= brightness <= 100:
                     warnings.append(f"Brightness {brightness} is out of range (0-100)")
 
             # Check styles
-            if 'styles' not in config:
+            if "styles" not in config:
                 warnings.append("No 'styles' section defined (will use defaults)")
 
             # Validate page structure
-            if 'pages' in config:
-                for page_name, page_config in config['pages'].items():
-                    if 'buttons' not in page_config:
+            if "pages" in config:
+                for page_name, page_config in config["pages"].items():
+                    if "buttons" not in page_config:
                         warnings.append(f"Page '{page_name}' has no buttons defined")
                     else:
-                        for button_num, button_config in page_config['buttons'].items():
+                        for button_num, button_config in page_config["buttons"].items():
                             try:
                                 button_int = int(button_num)
                                 if button_int < 1 or button_int > 32:
-                                    warnings.append(f"Button {button_num} is out of typical range (1-32)")
+                                    warnings.append(
+                                        f"Button {button_num} is out of typical range (1-32)"
+                                    )
                             except ValueError:
                                 errors.append(f"Invalid button number: {button_num}")
 
                             # Check actions
-                            if 'action' in button_config:
-                                action = button_config['action']
-                                if 'type' not in action:
+                            if "action" in button_config:
+                                action = button_config["action"]
+                                if "type" not in action:
                                     warnings.append(f"Button {button_num} has action without type")
 
             # Print results
@@ -353,9 +348,7 @@ class DeckyCLI:
         """Enable the service to start automatically on login."""
         print("Enabling Decky service...")
         result = subprocess.run(
-            ["systemctl", "--user", "enable", self.service_name],
-            capture_output=True,
-            text=True
+            ["systemctl", "--user", "enable", self.service_name], capture_output=True, text=True
         )
 
         if result.returncode == 0:
@@ -369,9 +362,7 @@ class DeckyCLI:
         """Disable the service from starting automatically."""
         print("Disabling Decky service...")
         result = subprocess.run(
-            ["systemctl", "--user", "disable", self.service_name],
-            capture_output=True,
-            text=True
+            ["systemctl", "--user", "disable", self.service_name], capture_output=True, text=True
         )
 
         if result.returncode == 0:
@@ -385,8 +376,8 @@ class DeckyCLI:
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser for the CLI."""
     parser = argparse.ArgumentParser(
-        prog='decky',
-        description='Decky - Stream Deck controller for Linux',
+        prog="decky",
+        description="Decky - Stream Deck controller for Linux",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -399,55 +390,61 @@ Examples:
   decky config edit work                 # Edit work.yaml
   decky config use kde                   # Switch to kde.yaml
   decky config validate myconfig         # Validate myconfig.yaml
-"""
+""",
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Run command (for daemon mode)
-    run_parser = subparsers.add_parser('run', help='Run the daemon directly')
-    run_parser.add_argument('config', help='Path to configuration file')
-    run_parser.add_argument('--log-level',
-                           choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-                           default='INFO',
-                           help='Logging level')
+    run_parser = subparsers.add_parser("run", help="Run the daemon directly")
+    run_parser.add_argument("config", help="Path to configuration file")
+    run_parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Logging level",
+    )
 
     # Service management commands
-    subparsers.add_parser('start', help='Start the Decky service')
-    subparsers.add_parser('stop', help='Stop the Decky service')
-    subparsers.add_parser('restart', help='Restart the Decky service')
-    subparsers.add_parser('status', help='Show service status')
+    subparsers.add_parser("start", help="Start the Decky service")
+    subparsers.add_parser("stop", help="Stop the Decky service")
+    subparsers.add_parser("restart", help="Restart the Decky service")
+    subparsers.add_parser("status", help="Show service status")
 
     # Logs command
-    logs_parser = subparsers.add_parser('logs', help='Show service logs')
-    logs_parser.add_argument('-f', '--follow', action='store_true',
-                            default=True, help='Follow log output (default)')
-    logs_parser.add_argument('-n', '--lines', type=int, default=50,
-                            help='Number of lines to show (when not following)')
-    logs_parser.add_argument('--no-follow', action='store_true',
-                            help="Don't follow, just show recent logs")
+    logs_parser = subparsers.add_parser("logs", help="Show service logs")
+    logs_parser.add_argument(
+        "-f", "--follow", action="store_true", default=True, help="Follow log output (default)"
+    )
+    logs_parser.add_argument(
+        "-n", "--lines", type=int, default=50, help="Number of lines to show (when not following)"
+    )
+    logs_parser.add_argument(
+        "--no-follow", action="store_true", help="Don't follow, just show recent logs"
+    )
 
     # Config subcommands
-    config_parser = subparsers.add_parser('config', help='Configuration management')
-    config_subparsers = config_parser.add_subparsers(dest='config_command')
+    config_parser = subparsers.add_parser("config", help="Configuration management")
+    config_subparsers = config_parser.add_subparsers(dest="config_command")
 
-    config_subparsers.add_parser('list', help='List available configurations')
+    config_subparsers.add_parser("list", help="List available configurations")
 
-    edit_parser = config_subparsers.add_parser('edit', help='Edit a configuration')
-    edit_parser.add_argument('name', nargs='?', default='default',
-                            help='Configuration name (default: default)')
+    edit_parser = config_subparsers.add_parser("edit", help="Edit a configuration")
+    edit_parser.add_argument(
+        "name", nargs="?", default="default", help="Configuration name (default: default)"
+    )
 
-    use_parser = config_subparsers.add_parser('use', help='Switch to a configuration')
-    use_parser.add_argument('name', help='Configuration name to use')
+    use_parser = config_subparsers.add_parser("use", help="Switch to a configuration")
+    use_parser.add_argument("name", help="Configuration name to use")
 
-    validate_parser = config_subparsers.add_parser('validate',
-                                                   help='Validate a configuration')
-    validate_parser.add_argument('name', nargs='?', default='default',
-                                help='Configuration name (default: default)')
+    validate_parser = config_subparsers.add_parser("validate", help="Validate a configuration")
+    validate_parser.add_argument(
+        "name", nargs="?", default="default", help="Configuration name (default: default)"
+    )
 
     # Service enable/disable
-    subparsers.add_parser('enable', help='Enable automatic start on login')
-    subparsers.add_parser('disable', help='Disable automatic start')
+    subparsers.add_parser("enable", help="Enable automatic start on login")
+    subparsers.add_parser("disable", help="Disable automatic start")
 
     return parser
 
@@ -460,43 +457,43 @@ def main():
     cli = DeckyCLI()
 
     # Handle commands
-    if args.command == 'run':
+    if args.command == "run":
         # Run as daemon
         return cli.run_daemon(args.config, args.log_level)
 
-    elif args.command == 'start':
+    elif args.command == "start":
         return cli.start_service()
 
-    elif args.command == 'stop':
+    elif args.command == "stop":
         return cli.stop_service()
 
-    elif args.command == 'restart':
+    elif args.command == "restart":
         return cli.restart_service()
 
-    elif args.command == 'status':
+    elif args.command == "status":
         return cli.show_status()
 
-    elif args.command == 'logs':
+    elif args.command == "logs":
         follow = not args.no_follow
         return cli.show_logs(follow=follow, lines=args.lines)
 
-    elif args.command == 'config':
-        if args.config_command == 'list':
+    elif args.command == "config":
+        if args.config_command == "list":
             return cli.list_configs()
-        elif args.config_command == 'edit':
+        elif args.config_command == "edit":
             return cli.edit_config(args.name)
-        elif args.config_command == 'use':
+        elif args.config_command == "use":
             return cli.use_config(args.name)
-        elif args.config_command == 'validate':
+        elif args.config_command == "validate":
             return cli.validate_config(args.name)
         else:
             parser.print_help()
             return 1
 
-    elif args.command == 'enable':
+    elif args.command == "enable":
         return cli.enable_service()
 
-    elif args.command == 'disable':
+    elif args.command == "disable":
         return cli.disable_service()
 
     else:
@@ -505,5 +502,5 @@ def main():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

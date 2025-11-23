@@ -2,10 +2,11 @@
 URL opening action
 """
 
-import subprocess
 import logging
-from typing import Dict, Any
-from .base import BaseAction, ActionContext
+import subprocess
+from typing import Any, Dict
+
+from .base import ActionContext, BaseAction
 
 logger = logging.getLogger(__name__)
 

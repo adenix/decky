@@ -2,9 +2,9 @@
 Base action class for all Stream Deck button actions
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
 import logging
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class ActionContext:
         self.controller = controller
         self.button_config = button_config
         self.key_index = key_index
-        self.platform = controller.platform if hasattr(controller, 'platform') else None
+        self.platform = controller.platform if hasattr(controller, "platform") else None
 
 
 class BaseAction(ABC):

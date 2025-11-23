@@ -1,0 +1,23 @@
+[bandit]
+exclude_dirs = [
+    '/tests',
+    '/.venv',
+    '/venv',
+    '/__pycache__'
+]
+
+# Skip these checks (with justification):
+skips = [
+    # B404, B603, B607 - subprocess usage is intentional for command execution
+    # We'll add warnings in the code review instead
+    'B404',
+    'B603',
+    'B607',
+]
+
+# Set severity level
+severity = medium
+
+# Set confidence level
+confidence = medium
+

@@ -1,0 +1,34 @@
+# Automatically label PRs based on changed files
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: ['*.md', 'docs/**/*']
+
+tests:
+  - changed-files:
+    - any-glob-to-any-file: 'tests/**/*'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: ['.github/**/*', '.pre-commit-config.yaml', 'Makefile']
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file: ['requirements.txt', 'pyproject.toml']
+
+actions:
+  - changed-files:
+    - any-glob-to-any-file: 'src/decky/actions/**/*'
+
+platforms:
+  - changed-files:
+    - any-glob-to-any-file: 'src/decky/platforms/**/*'
+
+core:
+  - changed-files:
+    - any-glob-to-any-file: ['src/decky/controller.py', 'src/decky/main.py']
+
+config:
+  - changed-files:
+    - any-glob-to-any-file: ['configs/**/*', 'src/decky/config/**/*']
+

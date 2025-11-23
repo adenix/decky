@@ -3,11 +3,11 @@
 Decky - Main entry point using modular architecture
 """
 
-import sys
-import os
 import argparse
 import logging
+import os
 import signal
+import sys
 
 # Add src to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -17,18 +17,13 @@ from decky.controller import DeckyController
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(
-        description="Decky - Stream Deck controller for Linux"
-    )
-    parser.add_argument(
-        "config",
-        help="Path to YAML configuration file"
-    )
+    parser = argparse.ArgumentParser(description="Decky - Stream Deck controller for Linux")
+    parser.add_argument("config", help="Path to YAML configuration file")
     parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        help="Logging level"
+        help="Logging level",
     )
 
     args = parser.parse_args()
@@ -36,7 +31,7 @@ def main():
     # Set up logging
     logging.basicConfig(
         level=getattr(logging, args.log_level),
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     logger = logging.getLogger(__name__)
@@ -61,7 +56,7 @@ def main():
 
     # Register signal handlers
     signal.signal(signal.SIGTERM, signal_handler)  # systemd stop
-    signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
+    signal.signal(signal.SIGINT, signal_handler)  # Ctrl+C
 
     # Run controller
     try:

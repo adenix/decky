@@ -3,8 +3,9 @@ Page switching action
 """
 
 import logging
-from typing import Dict, Any
-from .base import BaseAction, ActionContext
+from typing import Any, Dict
+
+from .base import ActionContext, BaseAction
 
 logger = logging.getLogger(__name__)
 

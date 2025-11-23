@@ -1,0 +1,27 @@
+# Code Owners for Decky
+# These owners will be automatically requested for review when someone opens a pull request
+
+# Default owner for everything in the repo
+* @adenix
+
+# Core components
+/src/decky/controller.py @adenix
+/src/decky/main.py @adenix
+
+# Actions system
+/src/decky/actions/ @adenix
+
+# Platform integrations
+/src/decky/platforms/ @adenix
+
+# Configuration
+/pyproject.toml @adenix
+/requirements.txt @adenix
+
+# CI/CD
+/.github/ @adenix
+
+# Documentation
+/*.md @adenix
+/docs/ @adenix
+

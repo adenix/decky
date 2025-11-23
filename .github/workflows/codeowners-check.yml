@@ -1,0 +1,26 @@
+name: Code Owners
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-codeowners:
+    name: Validate Code Owners
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check if CODEOWNERS file exists
+      run: |
+        if [ ! -f .github/CODEOWNERS ]; then
+          echo "Warning: CODEOWNERS file not found"
+          exit 0
+        fi
+    
+    - name: Validate CODEOWNERS syntax
+      uses: mszostok/codeowners-validator@v0.7.4
+      with:
+        checks: "files,duppatterns"
+

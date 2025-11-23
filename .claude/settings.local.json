@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(journalctl:*)",
+      "Bash(qdbus6:*)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(PYTHONPATH=src .venv/bin/pytest:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(.venv/bin/pytest tests/unit/test_device_manager.py -v --tb=no)",
+      "Bash(PYTHONPATH=src .venv/bin/python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

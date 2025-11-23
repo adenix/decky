@@ -2,9 +2,11 @@
 Tests for graceful shutdown and signal handling.
 """
 
-import pytest
 import signal
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
 from decky.controller import DeckyController
 
 
@@ -14,16 +16,11 @@ class TestGracefulShutdown:
     @pytest.fixture
     def controller(self):
         """Create a controller instance with mocked dependencies."""
-        with patch('decky.controller.ConfigLoader'), \
-             patch('decky.controller.DeckManager'), \
-             patch('decky.controller.ButtonRenderer'), \
-             patch('decky.controller.registry'), \
-             patch('decky.controller.detect_platform'):
-            controller = DeckyController('/test/config.yaml')
-            controller.config = {
-                'device': {'brightness': 75},
-                'pages': {'main': {'buttons': {}}}
-            }
+        with patch("decky.controller.ConfigLoader"), patch("decky.controller.DeckManager"), patch(
+            "decky.controller.ButtonRenderer"
+        ), patch("decky.controller.registry"), patch("decky.controller.detect_platform"):
+            controller = DeckyController("/test/config.yaml")
+            controller.config = {"device": {"brightness": 75}, "pages": {"main": {"buttons": {}}}}
             return controller
 
     def test_shutting_down_flag_prevents_reconnection(self, controller):
@@ -39,11 +36,11 @@ class TestGracefulShutdown:
         controller.is_locked = False
 
         # Attempt connection should not be made when shutting down
-        with patch.object(controller, 'connect') as mock_connect:
+        with patch.object(controller, "connect") as mock_connect:
             # Simulate the check that happens in the run loop
-            should_reconnect = (not controller.deck and
-                              not controller.is_locked and
-                              not controller.shutting_down)
+            should_reconnect = (
+                not controller.deck and not controller.is_locked and not controller.shutting_down
+            )
 
             assert should_reconnect is False
             mock_connect.assert_not_called()
@@ -58,7 +55,7 @@ class TestGracefulShutdown:
         assert controller.shutting_down is True
 
         # Verify the flag prevents reconnection logic
-        with patch.object(controller, 'connect') as mock_connect:
+        with patch.object(controller, "connect") as mock_connect:
             # This simulates the reconnection check in the run loop
             if not controller.deck and not controller.is_locked and not controller.shutting_down:
                 controller.connect()
@@ -71,7 +68,7 @@ class TestGracefulShutdown:
         mock_deck = Mock()
         controller.deck = mock_deck
 
-        with patch.object(controller.deck_manager, 'disconnect') as mock_disconnect:
+        with patch.object(controller.deck_manager, "disconnect") as mock_disconnect:
             controller._disconnect_deck()
 
         # Verify disconnect was called and deck was cleared
@@ -83,7 +80,7 @@ class TestGracefulShutdown:
         controller.shutting_down = True
         controller.deck = None
 
-        with patch.object(controller, 'connect') as mock_connect:
+        with patch.object(controller, "connect") as mock_connect:
             # Simulate screen unlock logic
             if not controller.shutting_down:
                 controller.connect()
@@ -95,16 +92,18 @@ class TestGracefulShutdown:
         """Test that the signal handler in main.py sets the correct flags."""
         from decky.main import main
 
-        with patch('decky.main.argparse.ArgumentParser') as mock_parser, \
-             patch('decky.main.logging.basicConfig'), \
-             patch('decky.main.os.path.exists', return_value=True), \
-             patch('decky.main.DeckyController') as mock_controller_class, \
-             patch('decky.main.signal.signal') as mock_signal:
+        with patch("decky.main.argparse.ArgumentParser") as mock_parser, patch(
+            "decky.main.logging.basicConfig"
+        ), patch("decky.main.os.path.exists", return_value=True), patch(
+            "decky.main.DeckyController"
+        ) as mock_controller_class, patch(
+            "decky.main.signal.signal"
+        ) as mock_signal:
 
             # Setup mock argument parser
             mock_args = Mock()
-            mock_args.config = '/test/config.yaml'
-            mock_args.log_level = 'INFO'
+            mock_args.config = "/test/config.yaml"
+            mock_args.log_level = "INFO"
             mock_parser.return_value.parse_args.return_value = mock_args
 
             # Create mock controller

@@ -6,7 +6,8 @@ including enumeration, connection, disconnection, and connection monitoring.
 """
 
 import logging
-from typing import Optional, Any
+from typing import Any, Optional
+
 from StreamDeck.DeviceManager import DeviceManager as StreamDeckManager
 
 logger = logging.getLogger(__name__)

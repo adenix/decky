@@ -2,10 +2,11 @@
 Integration tests for configuration compatibility - preventing breaking changes
 """
 
-import pytest
-import yaml
 import tempfile
 from pathlib import Path
+
+import pytest
+import yaml
 
 
 class TestConfigurationCompatibility:

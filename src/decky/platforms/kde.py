@@ -2,10 +2,11 @@
 KDE Plasma specific platform implementation
 """
 
+import logging
 import os
 import subprocess
-import logging
 from typing import Optional
+
 from .base import Platform
 
 logger = logging.getLogger(__name__)
@@ -20,21 +21,18 @@ class KDEPlatform(Platform):
     def detect(self) -> bool:
         """Detect if running KDE Plasma"""
         # Check XDG_CURRENT_DESKTOP
-        desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
-        if 'kde' in desktop or 'plasma' in desktop:
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        if "kde" in desktop or "plasma" in desktop:
             return True
 
         # Check for KDE session
-        session = os.environ.get('XDG_SESSION_DESKTOP', '').lower()
-        if 'kde' in session or 'plasma' in session:
+        session = os.environ.get("XDG_SESSION_DESKTOP", "").lower()
+        if "kde" in session or "plasma" in session:
             return True
 
         # Check if plasmashell is running
         try:
-            result = subprocess.run(
-                ['pgrep', '-x', 'plasmashell'],
-                capture_output=True
-            )
+            result = subprocess.run(["pgrep", "-x", "plasmashell"], capture_output=True)
             return result.returncode == 0
         except:
             pass
@@ -46,9 +44,7 @@ class KDEPlatform(Platform):
         # Try gtk-launch first (works for desktop application IDs)
         try:
             subprocess.Popen(
-                ['gtk-launch', app_id],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                ["gtk-launch", app_id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
             logger.debug(f"Launched {app_id} via gtk-launch")
             return True
@@ -59,9 +55,9 @@ class KDEPlatform(Platform):
         # Try with .desktop extension
         try:
             subprocess.Popen(
-                ['gtk-launch', f'{app_id}.desktop'],
+                ["gtk-launch", f"{app_id}.desktop"],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
             )
             logger.debug(f"Launched {app_id}.desktop via gtk-launch")
             return True
@@ -71,21 +67,23 @@ class KDEPlatform(Platform):
 
         # Try kioclient with full .desktop path
         desktop_paths = [
-            f'/usr/share/applications/{app_id}.desktop',
-            f'/usr/local/share/applications/{app_id}.desktop',
-            os.path.expanduser(f'~/.local/share/applications/{app_id}.desktop'),
+            f"/usr/share/applications/{app_id}.desktop",
+            f"/usr/local/share/applications/{app_id}.desktop",
+            os.path.expanduser(f"~/.local/share/applications/{app_id}.desktop"),
             # Flatpak applications
-            f'/var/lib/flatpak/exports/share/applications/{app_id}.desktop',
-            os.path.expanduser(f'~/.local/share/flatpak/exports/share/applications/{app_id}.desktop')
+            f"/var/lib/flatpak/exports/share/applications/{app_id}.desktop",
+            os.path.expanduser(
+                f"~/.local/share/flatpak/exports/share/applications/{app_id}.desktop"
+            ),
         ]
 
         for desktop_path in desktop_paths:
             if os.path.exists(desktop_path):
                 try:
                     subprocess.Popen(
-                        ['kioclient', 'exec', desktop_path],
+                        ["kioclient", "exec", desktop_path],
                         stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
+                        stderr=subprocess.DEVNULL,
                     )
                     logger.debug(f"Launched {app_id} via kioclient with {desktop_path}")
                     return True
@@ -96,9 +94,9 @@ class KDEPlatform(Platform):
         # Fallback to xdg-open with .desktop extension
         try:
             subprocess.Popen(
-                ['xdg-open', f'application://{app_id}.desktop'],
+                ["xdg-open", f"application://{app_id}.desktop"],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
             )
             logger.debug(f"Launched {app_id} via xdg-open with application:// URL")
             return True
@@ -108,11 +106,7 @@ class KDEPlatform(Platform):
 
         # Last resort - try direct execution if it's a command name
         try:
-            subprocess.Popen(
-                [app_id],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
+            subprocess.Popen([app_id], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             logger.debug(f"Launched {app_id} directly as command")
             return True
         except Exception as e:
@@ -127,33 +121,28 @@ class KDEPlatform(Platform):
         """Check if screen is locked using KDE methods"""
         # Try qdbus6 first (KDE 6)
         commands = [
-            ['qdbus6', 'org.freedesktop.ScreenSaver', '/ScreenSaver', 'GetActive'],
-            ['qdbus', 'org.freedesktop.ScreenSaver', '/ScreenSaver', 'GetActive'],
-            ['qdbus', 'org.kde.screensaver', '/ScreenSaver', 'GetActive']
+            ["qdbus6", "org.freedesktop.ScreenSaver", "/ScreenSaver", "GetActive"],
+            ["qdbus", "org.freedesktop.ScreenSaver", "/ScreenSaver", "GetActive"],
+            ["qdbus", "org.kde.screensaver", "/ScreenSaver", "GetActive"],
         ]
 
         for cmd in commands:
             try:
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=1
-                )
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=1)
                 if result.returncode == 0:
-                    return result.stdout.strip().lower() == 'true'
+                    return result.stdout.strip().lower() == "true"
             except:
                 continue
 
         # Fallback to loginctl
         try:
             result = subprocess.run(
-                ['loginctl', 'show-session', '-p', 'LockedHint'],
+                ["loginctl", "show-session", "-p", "LockedHint"],
                 capture_output=True,
                 text=True,
-                timeout=1
+                timeout=1,
             )
-            if result.returncode == 0 and 'LockedHint=yes' in result.stdout:
+            if result.returncode == 0 and "LockedHint=yes" in result.stdout:
                 return True
         except:
             pass
@@ -163,10 +152,10 @@ class KDEPlatform(Platform):
     def get_media_player_command(self, action: str) -> Optional[str]:
         """Get KDE media player control commands"""
         commands = {
-            'play-pause': 'qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause',
-            'next': 'qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next',
-            'previous': 'qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous',
-            'stop': 'qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Stop'
+            "play-pause": "qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause",
+            "next": "qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next",
+            "previous": "qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous",
+            "stop": "qdbus org.mpris.MediaPlayer2.* /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Stop",
         }
         return commands.get(action)
 
@@ -174,12 +163,12 @@ class KDEPlatform(Platform):
         """Get KDE volume control commands"""
         # Using pactl which works across most Linux systems
         commands = {
-            'increase': 'pactl set-sink-volume @DEFAULT_SINK@ +5%',
-            'decrease': 'pactl set-sink-volume @DEFAULT_SINK@ -5%',
-            'mute': 'pactl set-sink-mute @DEFAULT_SINK@ toggle'
+            "increase": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+            "decrease": "pactl set-sink-volume @DEFAULT_SINK@ -5%",
+            "mute": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
         }
 
-        if action == 'set' and value is not None:
-            return f'pactl set-sink-volume @DEFAULT_SINK@ {value}%'
+        if action == "set" and value is not None:
+            return f"pactl set-sink-volume @DEFAULT_SINK@ {value}%"
 
         return commands.get(action)

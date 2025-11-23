@@ -2,12 +2,14 @@
 Tests for action system - focusing on preventing regressions
 """
 
+from unittest.mock import Mock, call, patch
+
 import pytest
-from unittest.mock import Mock, patch, call
-from decky.actions.base import BaseAction, ActionContext
-from decky.actions.registry import ActionRegistry
-from decky.actions.command import CommandAction
+
 from decky.actions.application import ApplicationAction
+from decky.actions.base import ActionContext, BaseAction
+from decky.actions.command import CommandAction
+from decky.actions.registry import ActionRegistry
 
 
 class TestActionRegistry:
@@ -33,11 +35,15 @@ class TestActionRegistry:
 
         class TestAction1(BaseAction):
             action_type = "test"
-            def execute(self, context, config): return True
+
+            def execute(self, context, config):
+                return True
 
         class TestAction2(BaseAction):
             action_type = "test"
-            def execute(self, context, config): return False
+
+            def execute(self, context, config):
+                return False
 
         registry.register(TestAction1)
         registry.register(TestAction2)
@@ -69,7 +75,7 @@ class TestCommandAction:
         action = CommandAction()
         config = {"command": "echo test"}
 
-        with patch('subprocess.Popen') as mock_popen:
+        with patch("subprocess.Popen") as mock_popen:
             result = action.execute(action_context, config)
             assert result is True
             mock_popen.assert_called_once_with("echo test", shell=True)
@@ -93,7 +99,7 @@ class TestCommandAction:
         action = CommandAction()
         config = {"command": "failing_command"}
 
-        with patch('subprocess.Popen', side_effect=Exception("Command failed")):
+        with patch("subprocess.Popen", side_effect=Exception("Command failed")):
             result = action.execute(action_context, config)
             assert result is False
 
@@ -116,8 +122,8 @@ class TestApplicationAction:
         config = {"app": "test-app"}
         action_context.platform = None
 
-        with patch('os.path.exists', return_value=True):
-            with patch('subprocess.Popen') as mock_popen:
+        with patch("os.path.exists", return_value=True):
+            with patch("subprocess.Popen") as mock_popen:
                 result = action.execute(action_context, config)
                 assert result is True
                 assert mock_popen.called
@@ -128,8 +134,8 @@ class TestApplicationAction:
         config = {"app": "test-app"}
         action_context.platform = None
 
-        with patch('os.path.exists', return_value=False):
-            with patch('subprocess.Popen') as mock_popen:
+        with patch("os.path.exists", return_value=False):
+            with patch("subprocess.Popen") as mock_popen:
                 result = action.execute(action_context, config)
                 assert result is True
                 mock_popen.assert_called_once_with("test-app", shell=True)
@@ -164,11 +170,12 @@ class TestActionCompatibility:
     def test_action_execution_non_blocking(self, action_context):
         """Ensure actions don't block (regression test for freezing issue)"""
         import time
+
         action = CommandAction()
         config = {"command": "sleep 10"}
 
         start_time = time.time()
-        with patch('subprocess.Popen') as mock_popen:
+        with patch("subprocess.Popen") as mock_popen:
             # Popen should return immediately
             result = action.execute(action_context, config)
             elapsed = time.time() - start_time

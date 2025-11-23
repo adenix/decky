@@ -25,7 +25,7 @@ def detect_platform() -> Platform:
 
 
 __all__ = [
-    'Platform',
-    'KDEPlatform',
-    'detect_platform',
+    "Platform",
+    "KDEPlatform",
+    "detect_platform",
 ]

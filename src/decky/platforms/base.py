@@ -2,9 +2,9 @@
 Base platform abstraction for cross-distribution support
 """
 
-from abc import ABC, abstractmethod
-import subprocess
 import logging
+import subprocess
+from abc import ABC, abstractmethod
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -85,13 +85,7 @@ class Platform(ABC):
             True if successful
         """
         try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
             return result.returncode == 0
         except Exception as e:
             logger.error(f"Command execution failed: {e}")

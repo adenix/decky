@@ -5,9 +5,11 @@ Tests the controller's handling of device connection, disconnection,
 and reconnection scenarios.
 """
 
-import pytest
 import time
-from unittest.mock import Mock, MagicMock, patch, call
+from unittest.mock import MagicMock, Mock, call, patch
+
+import pytest
+
 from decky.controller import DeckyController
 
 
@@ -17,20 +19,11 @@ class TestControllerConnection:
     @pytest.fixture
     def controller(self):
         """Create a controller instance with mocked dependencies."""
-        with patch('decky.controller.ConfigLoader'), \
-             patch('decky.controller.DeckManager'), \
-             patch('decky.controller.ButtonRenderer'), \
-             patch('decky.controller.registry'), \
-             patch('decky.controller.detect_platform'):
-            controller = DeckyController('/test/config.yaml')
-            controller.config = {
-                'device': {'brightness': 75},
-                'pages': {
-                    'main': {
-                        'buttons': {}
-                    }
-                }
-            }
+        with patch("decky.controller.ConfigLoader"), patch("decky.controller.DeckManager"), patch(
+            "decky.controller.ButtonRenderer"
+        ), patch("decky.controller.registry"), patch("decky.controller.detect_platform"):
+            controller = DeckyController("/test/config.yaml")
+            controller.config = {"device": {"brightness": 75}, "pages": {"main": {"buttons": {}}}}
             return controller
 
     def test_connect_successful(self, controller):
@@ -40,7 +33,7 @@ class TestControllerConnection:
         controller.deck_manager.connect.return_value = mock_deck
 
         # Test connection
-        with patch.object(controller, '_setup_deck') as mock_setup:
+        with patch.object(controller, "_setup_deck") as mock_setup:
             result = controller.connect()
 
         # Verify behavior
@@ -55,7 +48,7 @@ class TestControllerConnection:
         controller.deck_manager.connect.return_value = None
 
         # Test connection
-        with patch.object(controller, '_setup_deck') as mock_setup:
+        with patch.object(controller, "_setup_deck") as mock_setup:
             result = controller.connect()
 
         # Verify behavior
@@ -86,7 +79,7 @@ class TestControllerConnection:
         controller.button_renderer.render_blank.return_value = Mock()
 
         # Test setup
-        with patch.object(controller, '_update_page') as mock_update:
+        with patch.object(controller, "_update_page") as mock_update:
             controller._setup_deck()
 
         # Verify configuration
@@ -155,20 +148,11 @@ class TestControllerReconnection:
     @pytest.fixture
     def controller(self):
         """Create a controller with mocked components for testing."""
-        with patch('decky.controller.ConfigLoader'), \
-             patch('decky.controller.DeckManager'), \
-             patch('decky.controller.ButtonRenderer'), \
-             patch('decky.controller.registry'), \
-             patch('decky.controller.detect_platform'):
-            controller = DeckyController('/test/config.yaml')
-            controller.config = {
-                'device': {'brightness': 100},
-                'pages': {
-                    'main': {
-                        'buttons': {}
-                    }
-                }
-            }
+        with patch("decky.controller.ConfigLoader"), patch("decky.controller.DeckManager"), patch(
+            "decky.controller.ButtonRenderer"
+        ), patch("decky.controller.registry"), patch("decky.controller.detect_platform"):
+            controller = DeckyController("/test/config.yaml")
+            controller.config = {"device": {"brightness": 100}, "pages": {"main": {"buttons": {}}}}
             controller.config_loader.load.return_value = controller.config
             # Mock the screen lock monitoring to prevent thread issues
             controller.platform = None  # Disable screen lock monitoring
@@ -195,8 +179,8 @@ class TestControllerReconnection:
         assert result is False
         assert controller.deck is None
 
-    @patch('decky.controller.time.sleep')
-    @patch('decky.controller.time.time')
+    @patch("decky.controller.time.sleep")
+    @patch("decky.controller.time.time")
     def test_disconnection_detection(self, mock_time, mock_sleep, controller):
         """Test that disconnection is detected and handled."""
         # Setup time simulation
@@ -226,8 +210,9 @@ class TestControllerReconnection:
         mock_sleep.side_effect = simulate_unplug_replug
 
         # Run the controller
-        with patch.object(controller, '_setup_deck'), \
-             patch.object(controller, '_disconnect_deck') as mock_disconnect:
+        with patch.object(controller, "_setup_deck"), patch.object(
+            controller, "_disconnect_deck"
+        ) as mock_disconnect:
             controller.run()
 
         # Verify disconnection was detected and handled
@@ -277,7 +262,7 @@ class TestControllerReconnection:
         assert result is True
         assert controller.deck == mock_deck
 
-    @patch('decky.controller.time.sleep')
+    @patch("decky.controller.time.sleep")
     def test_graceful_shutdown(self, mock_sleep, controller):
         """Test graceful shutdown with connected device."""
         # Setup
@@ -293,8 +278,9 @@ class TestControllerReconnection:
         mock_sleep.side_effect = [None, None, simulate_interrupt]
 
         # Run the controller
-        with patch.object(controller, '_setup_deck'), \
-             patch.object(controller, '_disconnect_deck') as mock_disconnect:
+        with patch.object(controller, "_setup_deck"), patch.object(
+            controller, "_disconnect_deck"
+        ) as mock_disconnect:
             controller.run()
 
         # Verify clean shutdown
@@ -302,7 +288,7 @@ class TestControllerReconnection:
         # Disconnect should be called in finally block
         assert mock_disconnect.called
 
-    @patch('decky.controller.time.sleep')
+    @patch("decky.controller.time.sleep")
     def test_unexpected_error_handling(self, mock_sleep, controller):
         """Test that unexpected errors in the main loop are handled."""
         # Setup
@@ -315,7 +301,7 @@ class TestControllerReconnection:
         mock_sleep.side_effect = [None, cause_error]
 
         # Run the controller
-        with patch.object(controller, '_setup_deck'):
+        with patch.object(controller, "_setup_deck"):
             controller.run()  # Should not crash
 
         # Verify shutdown

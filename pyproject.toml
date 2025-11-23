@@ -24,7 +24,13 @@ dev = [
     "pytest-mock>=3.10.0",
     "black>=23.0.0",
     "flake8>=6.0.0",
+    "flake8-docstrings>=1.7.0",
+    "flake8-bugbear>=23.0.0",
     "mypy>=1.0.0",
+    "isort>=5.12.0",
+    "bandit[toml]>=1.7.0",
+    "safety>=2.3.0",
+    "pre-commit>=3.0.0",
 ]
 dbus = [
     "dbus-python>=1.2.0",
@@ -73,4 +79,30 @@ exclude_lines = [
     "raise NotImplementedError",
     "pass",
     "except ImportError:",
+]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["decky"]
+skip_gitignore = true
+
+[tool.bandit]
+exclude_dirs = [
+    "/tests",
+    "/.venv",
+    "/venv",
+]
+skips = ["B404", "B603", "B607"]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
 ]

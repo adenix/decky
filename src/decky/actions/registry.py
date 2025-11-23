@@ -3,7 +3,8 @@ Action registry for managing and discovering action types
 """
 
 import logging
-from typing import Dict, Type, Optional
+from typing import Dict, Optional, Type
+
 from .base import BaseAction
 
 logger = logging.getLogger(__name__)
@@ -59,19 +60,21 @@ class ActionRegistry:
 
         # Discover all modules in the actions package
         for importer, modname, ispkg in pkgutil.iter_modules(actions_pkg.__path__):
-            if modname in ['base', 'registry', '__init__']:
+            if modname in ["base", "registry", "__init__"]:
                 continue
 
             try:
-                module = importlib.import_module(f'decky.actions.{modname}')
+                module = importlib.import_module(f"decky.actions.{modname}")
 
                 # Find all BaseAction subclasses in the module
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-                    if (isinstance(attr, type) and
-                            issubclass(attr, BaseAction) and
-                            attr is not BaseAction and
-                            hasattr(attr, 'action_type')):
+                    if (
+                        isinstance(attr, type)
+                        and issubclass(attr, BaseAction)
+                        and attr is not BaseAction
+                        and hasattr(attr, "action_type")
+                    ):
                         self.register(attr)
                         logger.info(f"Auto-registered action: {attr.action_type}")
 

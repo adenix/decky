@@ -2,11 +2,12 @@
 Application launcher action with platform-specific implementations
 """
 
-import subprocess
-import os
 import logging
-from typing import Dict, Any
-from .base import BaseAction, ActionContext
+import os
+import subprocess
+from typing import Any, Dict
+
+from .base import ActionContext, BaseAction
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,7 @@ class ApplicationAction(BaseAction):
         if os.path.exists(launcher_script):
             try:
                 subprocess.Popen(
-                    [launcher_script, app],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    [launcher_script, app], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
                 return True
             except Exception as e:

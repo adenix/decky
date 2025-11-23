@@ -2,20 +2,19 @@
 Pytest configuration and fixtures
 """
 
-import pytest
 import tempfile
-import yaml
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
+import pytest
+import yaml
 
 
 @pytest.fixture
 def sample_config():
     """Sample configuration for testing"""
     return {
-        "device": {
-            "brightness": 75
-        },
+        "device": {"brightness": 75},
         "styles": {
             "default": {
                 "font": "DejaVu Sans",
@@ -23,7 +22,7 @@ def sample_config():
                 "text_color": "#FFFFFF",
                 "background_color": "#000000",
                 "text_align": "bottom",
-                "text_offset": 0
+                "text_offset": 0,
             }
         },
         "pages": {
@@ -33,32 +32,14 @@ def sample_config():
                     1: {
                         "text": "Test",
                         "style": "default",
-                        "action": {
-                            "type": "command",
-                            "command": "echo test"
-                        }
+                        "action": {"type": "command", "command": "echo test"},
                     },
-                    2: {
-                        "icon": "test.png",
-                        "action": {
-                            "type": "application",
-                            "app": "test-app"
-                        }
-                    },
-                    3: {
-                        "text": "Page 2",
-                        "action": {
-                            "type": "page",
-                            "page": "secondary"
-                        }
-                    }
-                }
+                    2: {"icon": "test.png", "action": {"type": "application", "app": "test-app"}},
+                    3: {"text": "Page 2", "action": {"type": "page", "page": "secondary"}},
+                },
             },
-            "secondary": {
-                "name": "Secondary",
-                "buttons": {}
-            }
-        }
+            "secondary": {"name": "Secondary", "buttons": {}},
+        },
     }
 
 
@@ -66,7 +47,7 @@ def sample_config():
 def config_file(tmp_path, sample_config):
     """Create a temporary config file"""
     config_path = tmp_path / "test_config.yaml"
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         yaml.dump(sample_config, f)
     return config_path
 
@@ -81,10 +62,10 @@ def mock_deck():
     deck.get_serial_number.return_value = "TEST123"
     deck.deck_type.return_value = "Stream Deck Original"
     deck.key_image_format.return_value = {
-        'size': (72, 72),
-        'format': 'BMP',
-        'flip': (True, False),
-        'rotation': 0
+        "size": (72, 72),
+        "format": "BMP",
+        "flip": (True, False),
+        "rotation": 0,
     }
     return deck
 
@@ -125,5 +106,6 @@ def no_subprocess_calls(monkeypatch):
 def sample_image():
     """Create a sample test image"""
     from PIL import Image
-    img = Image.new('RGB', (72, 72), color='red')
+
+    img = Image.new("RGB", (72, 72), color="red")
     return img

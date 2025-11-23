@@ -2,11 +2,12 @@
 Configuration loader for Decky
 """
 
-import os
-import yaml
 import logging
+import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class ConfigLoader:
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = yaml.safe_load(f)
 
             # Validate basic structure
@@ -80,7 +81,7 @@ class ConfigLoader:
                 "text_color": "#FFFFFF",
                 "background_color": "#000000",
                 "text_align": "bottom",
-                "text_offset": 0
+                "text_offset": 0,
             }
 
         # Feedback defaults

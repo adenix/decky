@@ -5,8 +5,10 @@ These tests verify the robustness of USB device connection, disconnection,
 and reconnection handling.
 """
 
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
+
 from decky.device.manager import DeviceManager
 
 
@@ -16,9 +18,9 @@ class TestDeviceManager:
     def test_init_creates_stream_deck_manager(self):
         """Test that initialization creates the internal StreamDeckManager."""
         manager = DeviceManager()
-        assert hasattr(manager, '_stream_deck_manager')
+        assert hasattr(manager, "_stream_deck_manager")
 
-    @patch('decky.device.manager.StreamDeckManager')
+    @patch("decky.device.manager.StreamDeckManager")
     def test_connect_success(self, mock_sdm_class):
         """Test successful device connection."""
         # Setup mocks
@@ -40,7 +42,7 @@ class TestDeviceManager:
         mock_deck.open.assert_called_once()
         mock_deck.reset.assert_called_once()
 
-    @patch('decky.device.manager.StreamDeckManager')
+    @patch("decky.device.manager.StreamDeckManager")
     def test_connect_no_devices(self, mock_sdm_class):
         """Test connection when no devices are available."""
         # Setup mocks
@@ -56,7 +58,7 @@ class TestDeviceManager:
         assert result is None
         mock_sdm.enumerate.assert_called_once()
 
-    @patch('decky.device.manager.StreamDeckManager')
+    @patch("decky.device.manager.StreamDeckManager")
     def test_connect_handles_usb_error(self, mock_sdm_class):
         """Test that USB errors during connection are handled gracefully."""
         # Setup mocks
@@ -75,7 +77,7 @@ class TestDeviceManager:
         assert result is None
         mock_deck.open.assert_called_once()
 
-    @patch('decky.device.manager.StreamDeckManager')
+    @patch("decky.device.manager.StreamDeckManager")
     def test_connect_reenumerates_each_time(self, mock_sdm_class):
         """Test that connect() re-enumerates devices on each call (for hot-plug support)."""
         # Setup mocks
@@ -229,7 +231,7 @@ class TestDeviceManager:
 class TestDeviceManagerIntegration:
     """Integration tests for device connection lifecycle."""
 
-    @patch('decky.device.manager.StreamDeckManager')
+    @patch("decky.device.manager.StreamDeckManager")
     def test_connect_disconnect_cycle(self, mock_sdm_class):
         """Test a complete connect and disconnect cycle."""
         # Setup mocks
@@ -259,7 +261,7 @@ class TestDeviceManagerIntegration:
         mock_deck.reset.assert_called()  # Called during connect and disconnect
         mock_deck.close.assert_called_once()
 
-    @patch('decky.device.manager.StreamDeckManager')
+    @patch("decky.device.manager.StreamDeckManager")
     def test_reconnection_after_unplug(self, mock_sdm_class):
         """Test reconnection scenario after device is unplugged."""
         # Setup mocks
@@ -305,7 +307,7 @@ class TestDeviceManagerIntegration:
         mock_deck2.is_visual.return_value = True
         assert manager.is_connected(deck2) is True
 
-    @patch('decky.device.manager.StreamDeckManager')
+    @patch("decky.device.manager.StreamDeckManager")
     def test_multiple_connection_attempts_no_device(self, mock_sdm_class):
         """Test multiple connection attempts when no device is available."""
         # Setup mocks

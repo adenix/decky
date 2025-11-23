@@ -4,6 +4,14 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -16,21 +24,27 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Virtual Environment
-.venv/
-venv/
-ENV/
-env/
-.env
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
 
-# IDE
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -41,29 +55,7 @@ env/
 # Project specific
 *.log
 *.pid
-.streamdeck_cache/
-images/cache/
+.decky/
 
-# Config backups
-*.yaml.bak
-*.yml.bak
-configs/*.backup
-
-# Test files
-test_*.yaml
-scratch/
-.pytest_cache/
-.coverage
-htmlcov/
-*.cover
-.hypothesis/
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# System
-Thumbs.db
-.directory
-
-# Claude settings
-.claude/
+# Pre-commit
+.pre-commit-config.yaml.bak
