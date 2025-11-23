@@ -162,7 +162,9 @@ pages:
 ## Action Types
 
 ### Command
+
 Execute a shell command:
+
 ```yaml
 action:
   type: command
@@ -170,7 +172,9 @@ action:
 ```
 
 ### Keypress
+
 Send keyboard shortcuts:
+
 ```yaml
 action:
   type: keypress
@@ -178,7 +182,9 @@ action:
 ```
 
 ### Page Switch
+
 Navigate between button pages:
+
 ```yaml
 action:
   type: page
@@ -186,7 +192,9 @@ action:
 ```
 
 ### Brightness Control
+
 Adjust Stream Deck brightness:
+
 ```yaml
 action:
   type: brightness
@@ -194,7 +202,9 @@ action:
 ```
 
 ### Multi-Action
+
 Chain multiple actions:
+
 ```yaml
 action:
   type: multi
@@ -208,6 +218,7 @@ action:
 ## Button Styling
 
 ### Using Text
+
 ```yaml
 buttons:
   1:
@@ -216,7 +227,9 @@ buttons:
 ```
 
 ### Using Icons
+
 Icons can be specified in multiple ways:
+
 ```yaml
 buttons:
   1:
@@ -237,13 +250,15 @@ buttons:
 ```
 
 Icon search order:
+
 1. Absolute path (with `~` expansion)
-2. Relative to `~/.decky/`
-3. Relative to config file directory
-4. In `~/.decky/icons/` directory
-5. In legacy `images/` directory (for backward compatibility)
+1. Relative to `~/.decky/`
+1. Relative to config file directory
+1. In `~/.decky/icons/` directory
+1. In legacy `images/` directory (for backward compatibility)
 
 ### Custom Styles
+
 ```yaml
 styles:
   alert:
@@ -260,7 +275,9 @@ buttons:
 ## Advanced Configuration
 
 ### Dynamic Commands
+
 Use environment variables and shell features:
+
 ```yaml
 action:
   type: command
@@ -268,6 +285,7 @@ action:
 ```
 
 ### Workspace Navigation
+
 ```yaml
 buttons:
   1:
@@ -278,6 +296,7 @@ buttons:
 ```
 
 ### Media Controls
+
 ```yaml
 buttons:
   1:
@@ -289,15 +308,15 @@ buttons:
 
 ## Comparison with Other Solutions
 
-| Feature | Decky | streamdeck-ui | OpenDeck |
-|---------|-------|---------------|----------|
-| Configuration | YAML files | GUI | GUI + Plugins |
-| Resource Usage | Minimal | Moderate | Heavy |
-| Version Control | ✅ Excellent | ❌ Database | ❌ Complex |
-| Setup Complexity | Simple | Moderate | Complex |
-| Plugin System | ❌ No | ✅ Python | ✅ Stream Deck SDK |
-| Hot Reload | ✅ Yes | ❌ No | ❌ No |
-| Dependencies | Minimal | Qt Framework | Electron |
+| Feature          | Decky        | streamdeck-ui | OpenDeck           |
+| ---------------- | ------------ | ------------- | ------------------ |
+| Configuration    | YAML files   | GUI           | GUI + Plugins      |
+| Resource Usage   | Minimal      | Moderate      | Heavy              |
+| Version Control  | ✅ Excellent | ❌ Database   | ❌ Complex         |
+| Setup Complexity | Simple       | Moderate      | Complex            |
+| Plugin System    | ❌ No        | ✅ Python     | ✅ Stream Deck SDK |
+| Hot Reload       | ✅ Yes       | ❌ No         | ❌ No              |
+| Dependencies     | Minimal      | Qt Framework  | Electron           |
 
 ## Tips and Tricks
 
@@ -321,6 +340,7 @@ deckyctl edit work
 ### Configuration Location
 
 When installed as a service, configs are stored in `~/.decky/configs/`:
+
 ```
 ~/.decky/configs/
 ├── default.yaml    # Default config
@@ -333,6 +353,7 @@ When installed as a service, configs are stored in `~/.decky/configs/`:
 ### Git Integration
 
 Keep your configs in version control:
+
 ```bash
 # Add configs to your dotfiles repo
 cd ~/dotfiles
@@ -344,6 +365,7 @@ git commit -m "Add Stream Deck configurations"
 ### Service Auto-Start
 
 The service is automatically installed as a user service that starts on login:
+
 ```bash
 # Service is managed with systemctl --user commands
 systemctl --user status decky   # Check status
@@ -358,15 +380,18 @@ deckyctl disable  # Disable auto-start
 ## Troubleshooting
 
 ### Stream Deck Not Detected
+
 - Ensure udev rules are installed: `ls /etc/udev/rules.d/*streamdeck*`
 - Replug the Stream Deck after installing rules
 - Check USB connection: `lsusb | grep 0fd9`
 
 ### Permission Denied
+
 - Make sure you're in the `plugdev` group: `groups`
 - Logout and login again after setup
 
 ### Buttons Not Working
+
 - Check xdotool is installed: `which xdotool`
 - For Wayland, you may need to use `ydotool` instead
 

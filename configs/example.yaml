@@ -8,248 +8,248 @@ device:
 # Define reusable styles
 styles:
   default:
-    font: "DejaVu Sans"
+    font: DejaVu Sans
     font_size: 14
-    text_color: "#FFFFFF"
-    background_color: "#333333"
+    text_color: '#FFFFFF'
+    background_color: '#333333'
 
   active:
-    font: "DejaVu Sans Bold"
+    font: DejaVu Sans Bold
     font_size: 14
-    text_color: "#000000"
-    background_color: "#00FF00"
+    text_color: '#000000'
+    background_color: '#00FF00'
 
   media:
-    font: "DejaVu Sans"
+    font: DejaVu Sans
     font_size: 12
-    text_color: "#FFFFFF"
-    background_color: "#1DB954"
+    text_color: '#FFFFFF'
+    background_color: '#1DB954'
 
 # Define pages of buttons
 pages:
   main:
-    name: "Main"
+    name: Main
     buttons:
       1:
-        label: "Terminal"
-        icon: "terminal"  # Can be icon name or path to image
+        label: Terminal
+        icon: terminal    # Can be icon name or path to image
         action:
           type: command
-          command: "gnome-terminal"
+          command: gnome-terminal
 
       2:
-        label: "VS Code"
-        icon: "vscode"
+        label: VS Code
+        icon: vscode
         action:
           type: command
-          command: "code"
+          command: code
 
       3:
-        label: "Browser"
-        icon: "firefox"
+        label: Browser
+        icon: firefox
         action:
           type: command
-          command: "firefox"
+          command: firefox
 
       4:
-        label: "Files"
-        icon: "folder"
+        label: Files
+        icon: folder
         action:
           type: command
-          command: "nautilus"
+          command: nautilus
 
       5:
-        label: "Screenshot"
-        icon: "camera"
+        label: Screenshot
+        icon: camera
         action:
           type: command
-          command: "gnome-screenshot -i"
+          command: gnome-screenshot -i
 
       6:
-        label: "Mute"
-        icon: "mic-mute"
-        style: "default"
+        label: Mute
+        icon: mic-mute
+        style: default
         action:
           type: keypress
-          keys: ["ctrl", "alt", "m"]
+          keys: [ctrl, alt, m]
 
       7:
-        label: "Play/Pause"
-        icon: "play-pause"
-        style: "media"
+        label: Play/Pause
+        icon: play-pause
+        style: media
         action:
           type: keypress
-          keys: ["XF86AudioPlay"]
+          keys: [XF86AudioPlay]
 
       8:
-        label: "Vol -"
-        icon: "volume-down"
+        label: Vol -
+        icon: volume-down
         action:
           type: command
-          command: "pactl set-sink-volume @DEFAULT_SINK@ -5%"
+          command: pactl set-sink-volume @DEFAULT_SINK@ -5%
 
       9:
-        label: "Vol +"
-        icon: "volume-up"
+        label: Vol +
+        icon: volume-up
         action:
           type: command
-          command: "pactl set-sink-volume @DEFAULT_SINK@ +5%"
+          command: pactl set-sink-volume @DEFAULT_SINK@ +5%
 
       10:
-        label: "Brightness -"
-        text: "☀️ -"
+        label: Brightness -
+        text: ☀️ -
         action:
           type: brightness
           change: -10
 
       11:
-        label: "Brightness +"
-        text: "☀️ +"
+        label: Brightness +
+        text: ☀️ +
         action:
           type: brightness
           change: 10
 
       12:
-        label: "Lock"
-        icon: "lock"
+        label: Lock
+        icon: lock
         action:
           type: command
-          command: "gnome-screensaver-command -l"
+          command: gnome-screensaver-command -l
 
       13:
-        label: "Workspace ←"
-        text: "←"
+        label: Workspace ←
+        text: ←
         action:
           type: keypress
-          keys: ["ctrl", "alt", "Left"]
+          keys: [ctrl, alt, Left]
 
       14:
-        label: "Workspace →"
-        text: "→"
+        label: Workspace →
+        text: →
         action:
           type: keypress
-          keys: ["ctrl", "alt", "Right"]
+          keys: [ctrl, alt, Right]
 
       15:
-        label: "Dev Tools"
-        text: "DEV"
-        style: "active"
+        label: Dev Tools
+        text: DEV
+        style: active
         action:
           type: page
-          page: "development"
+          page: development
 
   development:
-    name: "Development"
+    name: Development
     buttons:
       1:
-        label: "Git Status"
+        label: Git Status
         text: "git\nstatus"
         action:
           type: command
-          command: "gnome-terminal -- bash -c 'git status; read -p \"Press enter to continue...\"'"
+          command: gnome-terminal -- bash -c 'git status; read -p "Press enter to continue..."'
 
       2:
-        label: "Docker PS"
+        label: Docker PS
         text: "docker\nps"
         action:
           type: command
-          command: "gnome-terminal -- bash -c 'docker ps; read -p \"Press enter to continue...\"'"
+          command: gnome-terminal -- bash -c 'docker ps; read -p "Press enter to continue..."'
 
       3:
-        label: "NPM Start"
+        label: NPM Start
         text: "npm\nstart"
         action:
           type: command
-          command: "gnome-terminal -- npm start"
+          command: gnome-terminal -- npm start
 
       4:
-        label: "Build"
-        text: "make"
+        label: Build
+        text: make
         action:
           type: command
-          command: "gnome-terminal -- make"
+          command: gnome-terminal -- make
 
       5:
-        label: "Test"
-        text: "test"
+        label: Test
+        text: test
         action:
           type: command
-          command: "gnome-terminal -- npm test"
+          command: gnome-terminal -- npm test
 
       6:
-        label: "GitHub"
-        icon: "github"
+        label: GitHub
+        icon: github
         action:
           type: command
-          command: "xdg-open https://github.com"
+          command: xdg-open https://github.com
 
       7:
-        label: "GitLab"
-        icon: "gitlab"
+        label: GitLab
+        icon: gitlab
         action:
           type: command
-          command: "xdg-open https://gitlab.com"
+          command: xdg-open https://gitlab.com
 
       8:
-        label: "Localhost"
+        label: Localhost
         text: "localhost\n:3000"
         action:
           type: command
-          command: "xdg-open http://localhost:3000"
+          command: xdg-open http://localhost:3000
 
       9:
-        label: "DB Client"
-        text: "DB"
+        label: DB Client
+        text: DB
         action:
           type: command
-          command: "dbeaver"
+          command: dbeaver
 
       10:
-        label: "Postman"
-        text: "API"
+        label: Postman
+        text: API
         action:
           type: command
-          command: "postman"
+          command: postman
 
       11:
-        label: "K9s"
-        text: "K9s"
+        label: K9s
+        text: K9s
         action:
           type: command
-          command: "gnome-terminal -- k9s"
+          command: gnome-terminal -- k9s
 
       12:
-        label: "htop"
-        text: "htop"
+        label: htop
+        text: htop
         action:
           type: command
-          command: "gnome-terminal -- htop"
+          command: gnome-terminal -- htop
 
       13:
-        label: "Logs"
-        text: "logs"
+        label: Logs
+        text: logs
         action:
           type: command
-          command: "gnome-terminal -- journalctl -f"
+          command: gnome-terminal -- journalctl -f
 
       14:
-        label: "Clear Cache"
+        label: Clear Cache
         text: "clear\ncache"
         action:
           type: multi
           actions:
-            - type: command
-              command: "rm -rf ~/.cache/npm"
-            - type: command
-              command: "notify-send 'Cache Cleared' 'NPM cache has been cleared'"
+          - type: command
+            command: rm -rf ~/.cache/npm
+          - type: command
+            command: notify-send 'Cache Cleared' 'NPM cache has been cleared'
 
       15:
-        label: "Back"
-        text: "← MAIN"
-        style: "active"
+        label: Back
+        text: ← MAIN
+        style: active
         action:
           type: page
-          page: "main"
+          page: main
 
 # Button press feedback
 feedback:

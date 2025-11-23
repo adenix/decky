@@ -5,9 +5,11 @@ This directory handles loading and validation of YAML configuration files that d
 ## Components
 
 ### `loader.py` - Configuration Loader
+
 Loads and validates YAML configuration files:
 
 **Key Features:**
+
 - YAML parsing with error handling
 - Schema validation
 - Default value injection
@@ -83,6 +85,7 @@ pages:
 ## Configuration Elements
 
 ### Device Configuration
+
 ```yaml
 device:
   brightness: 75      # Screen brightness (0-100)
@@ -91,10 +94,12 @@ device:
 ```
 
 ### Style System
+
 Styles cascade and merge:
+
 1. Built-in defaults
-2. Global style definitions
-3. Button-specific overrides
+1. Global style definitions
+1. Button-specific overrides
 
 ```yaml
 styles:
@@ -109,6 +114,7 @@ styles:
 ```
 
 ### Button Configuration
+
 ```yaml
 buttons:
   1:  # Position on Stream Deck (1-based)
@@ -121,7 +127,9 @@ buttons:
 ```
 
 ### Page System
+
 Pages allow multiple layouts:
+
 - Each page has its own button configuration
 - Pages can link to each other via page actions
 - Main page is shown on startup
@@ -129,13 +137,15 @@ Pages allow multiple layouts:
 ## Path Resolution
 
 Icon paths are resolved in the following order:
+
 1. Absolute paths (starting with `/`)
-2. Relative to `~/.decky/icons/`
-3. Relative to config file directory
+1. Relative to `~/.decky/icons/`
+1. Relative to config file directory
 
 ## Environment Variables
 
 Configuration supports environment variable expansion:
+
 ```yaml
 action:
   type: command
@@ -145,6 +155,7 @@ action:
 ## Validation
 
 The loader performs validation:
+
 - Required fields are present
 - Action types are valid
 - Referenced pages exist
@@ -153,6 +164,7 @@ The loader performs validation:
 ## Error Handling
 
 Configuration errors are handled gracefully:
+
 - Syntax errors show line number and context
 - Missing files return None (controller won't start)
 - Invalid values use defaults where possible
@@ -161,14 +173,15 @@ Configuration errors are handled gracefully:
 ## Best Practices
 
 1. **Organize by Function**: Group related buttons on the same page
-2. **Use Styles**: Define reusable styles for consistency
-3. **Icon Naming**: Use descriptive icon filenames
-4. **Page Navigation**: Always provide a way back to main page
-5. **Comments**: Document complex configurations
+1. **Use Styles**: Define reusable styles for consistency
+1. **Icon Naming**: Use descriptive icon filenames
+1. **Page Navigation**: Always provide a way back to main page
+1. **Comments**: Document complex configurations
 
 ## Examples
 
 See the `examples/` directory in the repository root for:
+
 - `basic.yaml`: Minimal working configuration
 - `kde.yaml`: Full KDE desktop integration
 - `development.yaml`: Developer tools setup

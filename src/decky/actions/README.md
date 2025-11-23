@@ -9,6 +9,7 @@ The action system follows a self-registering plugin pattern where each action cl
 ## Core Components
 
 ### `base.py` - Base Classes
+
 - **`Action`**: Abstract base class that all actions inherit from
 - **`ActionContext`**: Context object passed to actions containing:
   - Reference to the controller
@@ -16,7 +17,9 @@ The action system follows a self-registering plugin pattern where each action cl
   - Key index
 
 ### `registry.py` - Action Registry
+
 Central registry that manages all available actions:
+
 - Auto-discovers action classes via `__init_subclass__`
 - Maintains mapping of action types to implementations
 - Validates platform support
@@ -24,7 +27,9 @@ Central registry that manages all available actions:
 ### Built-in Actions
 
 #### `command.py` - Command Action
+
 Executes shell commands:
+
 ```yaml
 action:
   type: command
@@ -32,7 +37,9 @@ action:
 ```
 
 #### `application.py` - Application Action
+
 Launches desktop applications with platform-specific support:
+
 ```yaml
 action:
   type: application
@@ -40,7 +47,9 @@ action:
 ```
 
 #### `script.py` - Script Action
+
 Runs executable scripts from `~/.decky/scripts/`:
+
 ```yaml
 action:
   type: script
@@ -49,7 +58,9 @@ action:
 ```
 
 #### `page.py` - Page Action
+
 Switches between Stream Deck pages:
+
 ```yaml
 action:
   type: page
@@ -57,7 +68,9 @@ action:
 ```
 
 #### `media.py` - Media Control Action
+
 Controls media playback (play/pause, next, previous):
+
 ```yaml
 action:
   type: media
@@ -65,7 +78,9 @@ action:
 ```
 
 #### `volume.py` - Volume Control Action
+
 Adjusts system volume:
+
 ```yaml
 action:
   type: volume
@@ -78,12 +93,13 @@ action:
 To create a new action type:
 
 1. Create a new file in this directory
-2. Import and extend the `Action` base class
-3. Implement required methods:
+1. Import and extend the `Action` base class
+1. Implement required methods:
 
 ```python
 from .base import Action, ActionContext
 from typing import Dict, Any
+
 
 class MyCustomAction(Action):
     """Description of what this action does."""
@@ -139,6 +155,7 @@ The registry checks platform compatibility before executing actions.
 ## Testing
 
 Each action should have corresponding tests in `tests/unit/test_actions.py` that verify:
+
 - Configuration validation
 - Successful execution
 - Failure handling

@@ -31,4 +31,3 @@ core:
 config:
   - changed-files:
     - any-glob-to-any-file: ['configs/**/*', 'src/decky/config/**/*']
-

@@ -9,12 +9,15 @@ Platform support follows a strategy pattern where the appropriate platform imple
 ## Components
 
 ### `__init__.py` - Platform Detection
+
 Auto-detects the current desktop environment and returns appropriate platform implementation:
+
 - Checks environment variables (`XDG_CURRENT_DESKTOP`, `DESKTOP_SESSION`)
 - Falls back to process detection (checking for running DE processes)
 - Returns None if no supported platform detected (graceful degradation)
 
 ### `base.py` - Platform Interface
+
 Abstract base class defining the platform interface:
 
 ```python
@@ -51,17 +54,20 @@ class Platform(ABC):
 ```
 
 ### `kde.py` - KDE/Plasma Platform
+
 Full implementation for KDE Plasma desktop:
 
 **Application Launching:**
+
 1. `gtk-launch` (preferred, works with .desktop files)
-2. `gtk-launch` with .desktop extension
-3. `kioclient exec` with full .desktop path
-4. `xdg-open` with application:// URI
-5. Direct command execution (fallback)
+1. `gtk-launch` with .desktop extension
+1. `kioclient exec` with full .desktop path
+1. `xdg-open` with application:// URI
+1. Direct command execution (fallback)
 
 **Desktop File Resolution:**
 Searches multiple locations:
+
 - `/usr/share/applications/`
 - `/usr/local/share/applications/`
 - `~/.local/share/applications/`
@@ -69,9 +75,10 @@ Searches multiple locations:
 - `/var/lib/snapd/desktop/applications/`
 
 **Screen Lock Detection:**
+
 1. `qdbus6` (KDE 6)
-2. `qdbus` (KDE 5)
-3. `loginctl show-session` (systemd fallback)
+1. `qdbus` (KDE 5)
+1. `loginctl show-session` (systemd fallback)
 
 **Media Control:**
 Uses `qdbus` to control media players via MPRIS2 interface
@@ -84,11 +91,12 @@ Uses `qdbus` to control KDE's audio system
 To add support for a new desktop environment:
 
 1. Create a new file (e.g., `gnome.py`)
-2. Import and extend the `Platform` base class
-3. Implement all required methods:
+1. Import and extend the `Platform` base class
+1. Implement all required methods:
 
 ```python
 from .base import Platform
+
 
 class GnomePlatform(Platform):
     """GNOME desktop environment support."""
@@ -98,14 +106,13 @@ class GnomePlatform(Platform):
     def detect(self) -> bool:
         """Check if running on GNOME."""
         # Check XDG_CURRENT_DESKTOP
-        desktop = os.environ.get('XDG_CURRENT_DESKTOP', '').lower()
-        if 'gnome' in desktop:
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        if "gnome" in desktop:
             return True
 
         # Check for gnome-shell process
         try:
-            result = subprocess.run(['pgrep', 'gnome-shell'],
-                                  capture_output=True)
+            result = subprocess.run(["pgrep", "gnome-shell"], capture_output=True)
             return result.returncode == 0
         except:
             return False
@@ -126,7 +133,7 @@ class GnomePlatform(Platform):
 ## Platform Features Matrix
 
 | Platform | App Launch | Screen Lock | Media Control | Volume Control |
-|----------|------------|-------------|---------------|----------------|
+| -------- | ---------- | ----------- | ------------- | -------------- |
 | KDE      | ✅         | ✅          | ✅            | ✅             |
 | GNOME    | 🔄         | 🔄          | 🔄            | 🔄             |
 | XFCE     | 🔄         | 🔄          | 🔄            | 🔄             |
@@ -145,6 +152,7 @@ class GnomePlatform(Platform):
 ## Testing
 
 Platform implementations are tested with mocks:
+
 - `test_platform.py`: Platform detection and interface
 - `test_kde_platform.py`: KDE-specific functionality
 - Mock subprocess calls to avoid dependency on actual DE
@@ -152,6 +160,7 @@ Platform implementations are tested with mocks:
 ## Dependencies
 
 Platform integrations may require:
+
 - **KDE**: qdbus/qdbus6, kioclient, gtk-launch
 - **GNOME**: gio, gdbus, gnome-screensaver-command
 - **General**: xdg-open, loginctl (systemd)

@@ -36,6 +36,7 @@
 - [ ] Manual testing performed
 
 **Test Configuration**:
+
 - Python version:
 - OS:
 - Stream Deck model (if applicable):
@@ -60,4 +61,3 @@
 ## Additional Notes
 
 <!-- Any additional information that reviewers should know -->
-

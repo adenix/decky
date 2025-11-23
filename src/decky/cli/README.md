@@ -5,8 +5,9 @@ The unified command-line interface for the Decky Stream Deck controller.
 ## Overview
 
 The `decky` command provides both:
+
 1. **Daemon mode**: The actual service that runs in the background
-2. **Management commands**: Control the systemd service and configurations
+1. **Management commands**: Control the systemd service and configurations
 
 ## Architecture
 
@@ -70,6 +71,7 @@ decky config validate myconf # Validate myconf.yaml
 ### Python CLI Design
 
 The CLI uses Python's `argparse` with subcommands:
+
 - Main parser with subparsers for each command
 - Nested subparsers for `config` subcommands
 - Follows Unix conventions (exit codes, help text)
@@ -77,6 +79,7 @@ The CLI uses Python's `argparse` with subcommands:
 ### Service Integration
 
 Service management uses `systemctl --user` commands:
+
 - No root/sudo required (user services)
 - Integrates with journald for logging
 - Updates systemd service file for config switching
@@ -84,6 +87,7 @@ Service management uses `systemctl --user` commands:
 ### Configuration Validation
 
 The validator checks:
+
 - YAML syntax validity
 - Required sections (pages)
 - Button number ranges
@@ -93,17 +97,17 @@ The validator checks:
 ### Best Practices
 
 1. **Exit Codes**: Returns proper exit codes (0 for success, 1 for failure)
-2. **User Feedback**: Clear messages for all operations
-3. **Error Handling**: Graceful failures with helpful error messages
-4. **Help Text**: Comprehensive help with examples
-5. **No Root Required**: All operations run as user
+1. **User Feedback**: Clear messages for all operations
+1. **Error Handling**: Graceful failures with helpful error messages
+1. **Help Text**: Comprehensive help with examples
+1. **No Root Required**: All operations run as user
 
 ## Comparison with Old Architecture
 
 ### Before (Two Separate Tools)
 
 1. **decky** (bash script): Just ran the Python daemon
-2. **deckyctl** (bash script): Service management only
+1. **deckyctl** (bash script): Service management only
 
 ### After (Unified CLI)
 
@@ -124,6 +128,7 @@ sudo chmod +x /usr/local/bin/decky
 ```
 
 The systemd service file should reference:
+
 ```
 ExecStart=/usr/local/bin/decky run %h/.decky/configs/kde.yaml
 ```
@@ -131,6 +136,7 @@ ExecStart=/usr/local/bin/decky run %h/.decky/configs/kde.yaml
 ## Future Enhancements
 
 Potential additions to the CLI:
+
 - `decky test` - Test Stream Deck connection
 - `decky backup` - Backup configurations
 - `decky import/export` - Share configurations

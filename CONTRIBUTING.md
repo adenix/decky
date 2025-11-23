@@ -33,15 +33,15 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ### Pull Requests
 
 1. **Fork the repo** and create your branch from `main`
-2. **Install pre-commit hooks**: `pre-commit install`
-3. **Make your changes** following the coding standards below
-4. **Add tests** if you've added code that should be tested
-5. **Ensure the test suite passes**: `pytest`
-6. **Format your code**: `black src/ tests/`
-7. **Run linters**: `flake8 src/`
-8. **Update documentation** if needed
-9. **Write a good commit message**
-10. **Submit that pull request**!
+1. **Install pre-commit hooks**: `pre-commit install`
+1. **Make your changes** following the coding standards below
+1. **Add tests** if you've added code that should be tested
+1. **Ensure the test suite passes**: `pytest`
+1. **Format your code**: `black src/ tests/`
+1. **Run linters**: `flake8 src/`
+1. **Update documentation** if needed
+1. **Write a good commit message**
+1. **Submit that pull request**!
 
 ## Development Setup
 
@@ -172,6 +172,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types**:
+
 - `feat`: A new feature
 - `fix`: A bug fix
 - `docs`: Documentation only changes
@@ -183,6 +184,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `ci`: Changes to CI configuration
 
 **Examples**:
+
 ```
 feat(actions): add URL action type for opening web pages
 
@@ -196,30 +198,32 @@ test(actions): add tests for application launcher fallback
 ### Testing Guidelines
 
 1. **Write tests for all new features**
-2. **Maintain test coverage above 80%**
-3. **Use descriptive test names** that explain what's being tested
-4. **Use fixtures** from `conftest.py` for common test data
-5. **Mock external dependencies** (subprocess, file I/O, USB devices)
-6. **Write both positive and negative test cases**
+1. **Maintain test coverage above 80%**
+1. **Use descriptive test names** that explain what's being tested
+1. **Use fixtures** from `conftest.py` for common test data
+1. **Mock external dependencies** (subprocess, file I/O, USB devices)
+1. **Write both positive and negative test cases**
 
 ### Adding New Actions
 
 To add a new action type:
 
 1. **Create a new file** in `src/decky/actions/` (e.g., `myaction.py`)
-2. **Inherit from `BaseAction`**
-3. **Define `action_type`** class variable
-4. **Implement `execute()` method**
-5. **Implement `validate_config()` if needed**
-6. **Add tests** in `tests/unit/test_actions.py`
-7. **Document** in README.md action types section
-8. **Add example** in example configs
+1. **Inherit from `BaseAction`**
+1. **Define `action_type`** class variable
+1. **Implement `execute()` method**
+1. **Implement `validate_config()` if needed**
+1. **Add tests** in `tests/unit/test_actions.py`
+1. **Document** in README.md action types section
+1. **Add example** in example configs
 
 Example:
+
 ```python
 # src/decky/actions/myaction.py
 from .base import BaseAction, ActionContext
 from typing import Dict, Any
+
 
 class MyAction(BaseAction):
     action_type = "my_action"
@@ -265,4 +269,3 @@ Feel free to open an issue with the `question` label or reach out to the maintai
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
-

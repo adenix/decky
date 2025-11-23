@@ -76,4 +76,3 @@ quick-check: format lint test
 # CI simulation - run all checks that CI will run
 ci-local: format lint security test-cov
 	@echo "✅ Local CI checks complete!"
-

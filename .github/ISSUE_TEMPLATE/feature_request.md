@@ -1,10 +1,6 @@
----
-name: Feature Request
-about: Suggest an idea for this project
-title: '[FEATURE] '
-labels: enhancement
-assignees: ''
----
+______________________________________________________________________
+
+## name: Feature Request about: Suggest an idea for this project title: '\[FEATURE\] ' labels: enhancement assignees: ''
 
 ## Feature Description
 
@@ -13,7 +9,7 @@ A clear and concise description of what you want to happen.
 ## Problem Statement
 
 Is your feature request related to a problem? Please describe.
-Ex. I'm always frustrated when [...]
+Ex. I'm always frustrated when \[...\]
 
 ## Proposed Solution
 
@@ -54,4 +50,3 @@ If you have ideas on how this could be implemented, share them here.
 - [ ] I am willing to submit a PR to implement this feature
 - [ ] I can help test this feature
 - [ ] I can help document this feature
-
