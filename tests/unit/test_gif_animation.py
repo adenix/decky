@@ -17,9 +17,13 @@ class TestGIFAnimation:
     @pytest.fixture
     def controller(self):
         """Create a controller instance with mocked dependencies."""
-        with patch("decky.controller.ConfigLoader"), patch("decky.controller.DeckManager"), patch(
-            "decky.controller.ButtonRenderer"
-        ), patch("decky.controller.registry"), patch("decky.controller.detect_platform"):
+        with (
+            patch("decky.controller.ConfigLoader"),
+            patch("decky.controller.DeckManager"),
+            patch("decky.controller.ButtonRenderer"),
+            patch("decky.controller.registry"),
+            patch("decky.controller.detect_platform"),
+        ):
             controller = DeckyController("/test/config.yaml")
             controller.config = {
                 "device": {"brightness": 75},

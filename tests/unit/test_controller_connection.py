@@ -19,9 +19,13 @@ class TestControllerConnection:
     @pytest.fixture
     def controller(self):
         """Create a controller instance with mocked dependencies."""
-        with patch("decky.controller.ConfigLoader"), patch("decky.controller.DeckManager"), patch(
-            "decky.controller.ButtonRenderer"
-        ), patch("decky.controller.registry"), patch("decky.controller.detect_platform"):
+        with (
+            patch("decky.controller.ConfigLoader"),
+            patch("decky.controller.DeckManager"),
+            patch("decky.controller.ButtonRenderer"),
+            patch("decky.controller.registry"),
+            patch("decky.controller.detect_platform"),
+        ):
             controller = DeckyController("/test/config.yaml")
             controller.config = {"device": {"brightness": 75}, "pages": {"main": {"buttons": {}}}}
             return controller
@@ -148,9 +152,13 @@ class TestControllerReconnection:
     @pytest.fixture
     def controller(self):
         """Create a controller with mocked components for testing."""
-        with patch("decky.controller.ConfigLoader"), patch("decky.controller.DeckManager"), patch(
-            "decky.controller.ButtonRenderer"
-        ), patch("decky.controller.registry"), patch("decky.controller.detect_platform"):
+        with (
+            patch("decky.controller.ConfigLoader"),
+            patch("decky.controller.DeckManager"),
+            patch("decky.controller.ButtonRenderer"),
+            patch("decky.controller.registry"),
+            patch("decky.controller.detect_platform"),
+        ):
             controller = DeckyController("/test/config.yaml")
             controller.config = {"device": {"brightness": 100}, "pages": {"main": {"buttons": {}}}}
             controller.config_loader.load.return_value = controller.config
@@ -210,9 +218,10 @@ class TestControllerReconnection:
         mock_sleep.side_effect = simulate_unplug_replug
 
         # Run the controller
-        with patch.object(controller, "_setup_deck"), patch.object(
-            controller, "_disconnect_deck"
-        ) as mock_disconnect:
+        with (
+            patch.object(controller, "_setup_deck"),
+            patch.object(controller, "_disconnect_deck") as mock_disconnect,
+        ):
             controller.run()
 
         # Verify disconnection was detected and handled
@@ -278,9 +287,10 @@ class TestControllerReconnection:
         mock_sleep.side_effect = [None, None, simulate_interrupt]
 
         # Run the controller
-        with patch.object(controller, "_setup_deck"), patch.object(
-            controller, "_disconnect_deck"
-        ) as mock_disconnect:
+        with (
+            patch.object(controller, "_setup_deck"),
+            patch.object(controller, "_disconnect_deck") as mock_disconnect,
+        ):
             controller.run()
 
         # Verify clean shutdown

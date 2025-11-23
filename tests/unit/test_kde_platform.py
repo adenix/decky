@@ -72,9 +72,11 @@ class TestKDEPlatform:
 
     def test_launch_application_checks_multiple_desktop_locations(self, platform):
         """Test that multiple desktop file locations are checked."""
-        with patch("subprocess.Popen") as mock_popen, patch("os.path.exists") as mock_exists, patch(
-            "os.path.expanduser"
-        ) as mock_expand:
+        with (
+            patch("subprocess.Popen") as mock_popen,
+            patch("os.path.exists") as mock_exists,
+            patch("os.path.expanduser") as mock_expand,
+        ):
 
             mock_expand.side_effect = lambda x: x.replace("~", "/home/user")
 

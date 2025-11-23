@@ -16,9 +16,13 @@ class TestGracefulShutdown:
     @pytest.fixture
     def controller(self):
         """Create a controller instance with mocked dependencies."""
-        with patch("decky.controller.ConfigLoader"), patch("decky.controller.DeckManager"), patch(
-            "decky.controller.ButtonRenderer"
-        ), patch("decky.controller.registry"), patch("decky.controller.detect_platform"):
+        with (
+            patch("decky.controller.ConfigLoader"),
+            patch("decky.controller.DeckManager"),
+            patch("decky.controller.ButtonRenderer"),
+            patch("decky.controller.registry"),
+            patch("decky.controller.detect_platform"),
+        ):
             controller = DeckyController("/test/config.yaml")
             controller.config = {"device": {"brightness": 75}, "pages": {"main": {"buttons": {}}}}
             return controller
@@ -92,13 +96,13 @@ class TestGracefulShutdown:
         """Test that the signal handler in main.py sets the correct flags."""
         from decky.main import main
 
-        with patch("decky.main.argparse.ArgumentParser") as mock_parser, patch(
-            "decky.main.logging.basicConfig"
-        ), patch("decky.main.os.path.exists", return_value=True), patch(
-            "decky.main.DeckyController"
-        ) as mock_controller_class, patch(
-            "decky.main.signal.signal"
-        ) as mock_signal:
+        with (
+            patch("decky.main.argparse.ArgumentParser") as mock_parser,
+            patch("decky.main.logging.basicConfig"),
+            patch("decky.main.os.path.exists", return_value=True),
+            patch("decky.main.DeckyController") as mock_controller_class,
+            patch("decky.main.signal.signal") as mock_signal,
+        ):
 
             # Setup mock argument parser
             mock_args = Mock()
