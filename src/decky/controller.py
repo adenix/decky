@@ -4,10 +4,8 @@ Main controller for Decky Stream Deck
 
 import logging
 import os
-import sys
 import threading
 import time
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from PIL import Image

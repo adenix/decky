@@ -250,7 +250,7 @@ class ButtonRenderer:
                 if not os.path.exists(font_dir):
                     continue
 
-                for root, dirs, files in os.walk(font_dir):
+                for root, _dirs, files in os.walk(font_dir):
                     for file in files:
                         if file.endswith((".ttf", ".otf")):
                             if font_name.lower().replace(" ", "") in file.lower().replace(" ", ""):

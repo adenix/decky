@@ -136,7 +136,7 @@ class DeviceManager:
             _ = deck.is_visual()
             return True
 
-        except (OSError, IOError) as e:
+        except OSError as e:
             # USB device has been disconnected
             logger.debug(f"Stream Deck connection lost (USB disconnected): {type(e).__name__}")
             return False

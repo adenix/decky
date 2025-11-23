@@ -4,7 +4,6 @@ Configuration loader for Decky
 
 import logging
 import os
-from pathlib import Path
 from typing import Any, Dict
 
 import yaml
