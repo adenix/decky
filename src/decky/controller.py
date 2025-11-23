@@ -6,7 +6,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from PIL import Image
 
