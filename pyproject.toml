@@ -38,8 +38,7 @@ dbus = [
 ]
 
 [project.scripts]
-decky = "decky.main:main"
-deckyctl = "decky.cli:main"
+decky = "decky.cli:main"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

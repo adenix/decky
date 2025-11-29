@@ -2,11 +2,13 @@
 Platform abstraction for cross-distribution support
 """
 
+from typing import Optional
+
 from .base import Platform
 from .kde import KDEPlatform
 
 
-def detect_platform() -> Platform:
+def detect_platform() -> Optional[Platform]:
     """Auto-detect the current platform"""
     platforms = [
         KDEPlatform(),

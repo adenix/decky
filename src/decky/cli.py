@@ -25,12 +25,12 @@ logger = logging.getLogger(__name__)
 class DeckyCLI:
     """Main CLI handler for Decky commands."""
 
-    def __init__(self):
-        self.service_name = "decky"
-        self.config_dir = Path.home() / ".decky"
-        self.configs_dir = self.config_dir / "configs"
-        self.systemd_user_dir = Path.home() / ".config" / "systemd" / "user"
-        self.service_file = self.systemd_user_dir / f"{self.service_name}.service"
+    def __init__(self) -> None:
+        self.service_name: str = "decky"
+        self.config_dir: Path = Path.home() / ".decky"
+        self.configs_dir: Path = self.config_dir / "configs"
+        self.systemd_user_dir: Path = Path.home() / ".config" / "systemd" / "user"
+        self.service_file: Path = self.systemd_user_dir / f"{self.service_name}.service"
 
         # Ensure directories exist
         self.configs_dir.mkdir(parents=True, exist_ok=True)
@@ -447,7 +447,7 @@ Examples:
     return parser
 
 
-def main():
+def main() -> int:
     """Main entry point for the CLI."""
     parser = create_parser()
     args = parser.parse_args()
@@ -498,6 +498,8 @@ def main():
         # No command specified, show help
         parser.print_help()
         return 1
+
+    return 0
 
 
 if __name__ == "__main__":

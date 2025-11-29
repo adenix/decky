@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from decky.controller import DeckyController
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     parser = argparse.ArgumentParser(description="Decky - Stream Deck controller for Linux")
     parser.add_argument("config", help="Path to YAML configuration file")
