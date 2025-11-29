@@ -6,7 +6,7 @@ import logging
 import os
 import threading
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from PIL import Image
 
@@ -16,6 +16,7 @@ from .config.loader import ConfigLoader
 from .device.manager import DeviceManager as DeckManager
 from .device.renderer import ButtonRenderer
 from .platforms import detect_platform
+from .platforms.base import Platform
 
 logger = logging.getLogger(__name__)
 
@@ -23,26 +24,26 @@ logger = logging.getLogger(__name__)
 class DeckyController:
     """Main controller orchestrating Stream Deck operations"""
 
-    def __init__(self, config_path: str):
-        self.config_path = config_path
-        self.config = None
-        self.deck = None
-        self.current_page = "main"
-        self.running = False
-        self.shutting_down = False  # Flag to prevent reconnection during shutdown
-        self.lock_monitor_thread = None
-        self.is_locked = False
-        self.animated_buttons = {}
-        self.animation_thread = None
+    def __init__(self, config_path: str) -> None:
+        self.config_path: str = config_path
+        self.config: Optional[Dict[str, Any]] = None
+        self.deck: Optional[Any] = None  # StreamDeck device object
+        self.current_page: str = "main"
+        self.running: bool = False
+        self.shutting_down: bool = False  # Flag to prevent reconnection during shutdown
+        self.lock_monitor_thread: Optional[threading.Thread] = None
+        self.is_locked: bool = False
+        self.animated_buttons: Dict[int, Dict[str, Any]] = {}
+        self.animation_thread: Optional[threading.Thread] = None
 
         # Platform detection
-        self.platform = detect_platform()
+        self.platform: Optional[Platform] = detect_platform()
         logger.info(f"Detected platform: {self.platform.name if self.platform else 'generic'}")
 
         # Initialize components
-        self.config_loader = ConfigLoader()
-        self.deck_manager = DeckManager()
-        self.button_renderer = ButtonRenderer()
+        self.config_loader: ConfigLoader = ConfigLoader()
+        self.deck_manager: DeckManager = DeckManager()
+        self.button_renderer: ButtonRenderer = ButtonRenderer()
 
         # Register all actions
         registry.auto_discover()
@@ -86,7 +87,7 @@ class DeckyController:
             self.deck = None  # Ensure deck is None on error
             return False
 
-    def _setup_deck(self):
+    def _setup_deck(self) -> None:
         """
         Configure a newly connected Stream Deck device.
 
@@ -114,8 +115,15 @@ class DeckyController:
         except Exception as e:
             logger.error(f"Error during Stream Deck setup: {e}", exc_info=True)
 
-    def _key_callback(self, deck, key, state):
-        """Handle key press events"""
+    def _key_callback(self, deck: Any, key: int, state: bool) -> None:
+        """
+        Handle key press events.
+
+        Args:
+            deck: StreamDeck device instance
+            key: Zero-based key index
+            state: True for press, False for release
+        """
         if not state:  # Key release
             return
 
@@ -155,7 +163,7 @@ class DeckyController:
         else:
             logger.error(f"Unknown action type: {action_type}")
 
-    def _update_page(self):
+    def _update_page(self) -> None:
         """Update all buttons for current page"""
         if not self.deck:
             return
@@ -232,7 +240,9 @@ class DeckyController:
 
         return None
 
-    def _setup_animated_button(self, key_index: int, button_config: Dict, icon_file: str):
+    def _setup_animated_button(
+        self, key_index: int, button_config: Dict[str, Any], icon_file: str
+    ) -> None:
         """Set up animated GIF frames for a button."""
         try:
             gif = Image.open(icon_file)
@@ -258,7 +268,7 @@ class DeckyController:
         except Exception as e:
             logger.warning(f"Failed to load animated GIF {icon_file}: {e}")
 
-    def _render_animated_frame(self, key_index: int):
+    def _render_animated_frame(self, key_index: int) -> Optional[bytes]:
         """Render the current frame for an animated button."""
         if key_index not in self.animated_buttons:
             return None
@@ -272,7 +282,7 @@ class DeckyController:
             button_config, self.config.get("styles", {}), self.deck, frame
         )
 
-    def _update_animations(self):
+    def _update_animations(self) -> None:
         """Update animated buttons."""
         if not self.deck or not self.animated_buttons:
             return
@@ -297,7 +307,7 @@ class DeckyController:
                 if frame_image:
                     self.deck.set_key_image(key_index, frame_image)
 
-    def _monitor_screen_lock(self):
+    def _monitor_screen_lock(self) -> None:
         """Monitor screen lock status"""
         while self.running:
             try:
@@ -318,7 +328,7 @@ class DeckyController:
                 logger.error(f"Error in lock monitor: {e}")
                 time.sleep(5)
 
-    def _disconnect_deck(self):
+    def _disconnect_deck(self) -> None:
         """
         Safely disconnect from the Stream Deck device.
 
@@ -342,7 +352,7 @@ class DeckyController:
         else:
             logger.info("Stream Deck disconnected (device was already unavailable)")
 
-    def run(self):
+    def run(self) -> None:
         """
         Main application run loop.
 

