@@ -10,9 +10,36 @@ logger = logging.getLogger(__name__)
 
 
 class ActionContext:
-    """Context passed to actions during execution"""
+    """
+    Context passed to actions during execution.
+
+    Provides actions with access to the controller, button configuration,
+    and platform-specific capabilities.
+
+    Attributes:
+        controller: Reference to DeckyController instance
+        button_config: Full configuration dictionary for the button
+        key_index: Zero-based index of the button that was pressed
+        platform: Platform instance for platform-specific operations (may be None)
+
+    Example:
+        >>> context = ActionContext(
+        ...     controller=my_controller,
+        ...     button_config={"label": "Test", "action": {"type": "command"}},
+        ...     key_index=0
+        ... )
+        >>> context.platform.launch_application("firefox")
+    """
 
     def __init__(self, controller, button_config: Dict[str, Any], key_index: int):
+        """
+        Initialize action context.
+
+        Args:
+            controller: DeckyController instance
+            button_config: Button configuration from YAML
+            key_index: Zero-based button index
+        """
         self.controller = controller
         self.button_config = button_config
         self.key_index = key_index
@@ -20,7 +47,32 @@ class ActionContext:
 
 
 class BaseAction(ABC):
-    """Base class for all action types"""
+    """
+    Base class for all Stream Deck button action types.
+
+    All action types must inherit from this class and implement the execute() method.
+    The action system uses a registry pattern to discover and register actions.
+
+    Class Attributes:
+        action_type: Unique identifier for this action (e.g., "command", "url")
+        supported_platforms: List of platform names this action supports,
+                           or None for all platforms
+
+    Example:
+        >>> class MyAction(BaseAction):
+        ...     action_type = "my_action"
+        ...
+        ...     def execute(self, context, config):
+        ...         # Do something
+        ...         return True
+        ...
+        ...     def get_required_params(self):
+        ...         return ["my_param"]
+
+    See Also:
+        - ActionContext: Context passed to execute()
+        - ActionRegistry: Auto-discovers and registers actions
+    """
 
     # Action type identifier (must be unique)
     action_type: str = None
@@ -29,6 +81,12 @@ class BaseAction(ABC):
     supported_platforms: Optional[list] = None
 
     def __init__(self):
+        """
+        Initialize the action.
+
+        Raises:
+            ValueError: If action_type is not defined
+        """
         if not self.action_type:
             raise ValueError(f"{self.__class__.__name__} must define action_type")
 

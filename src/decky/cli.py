@@ -8,6 +8,7 @@ This module provides both the daemon entry point and service management commands
 import argparse
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -34,6 +35,46 @@ class DeckyCLI:
 
         # Ensure directories exist
         self.configs_dir.mkdir(parents=True, exist_ok=True)
+
+    def _validate_config_name(self, config_name: str) -> None:
+        """
+        Validate that a configuration name is safe.
+
+        This validation is ONLY for config names (shorthand references like 'kde' or 'work'),
+        NOT for full file paths. Full paths are validated by ConfigLoader.
+
+        Args:
+            config_name: Config name to validate (without .yaml extension)
+
+        Raises:
+            ValueError: If config name is invalid or unsafe
+
+        Example:
+            Valid: 'kde', 'work', 'my-config', 'config_v2'
+            Invalid: '../etc/passwd', 'my/config', 'config..name'
+        """
+        if not config_name:
+            raise ValueError("Config name cannot be empty")
+
+        # Only allow alphanumeric characters, underscores, and hyphens
+        if not re.match(r"^[a-zA-Z0-9_-]+$", config_name):
+            raise ValueError(
+                f"Invalid config name: '{config_name}'. "
+                f"Use only letters, numbers, underscores, and hyphens."
+            )
+
+        # Prevent directory traversal attempts
+        if ".." in config_name or "/" in config_name or "\\" in config_name:
+            raise ValueError(
+                f"Invalid config name: '{config_name}'. "
+                f"Config names cannot contain path separators or '..'."
+            )
+
+        # Prevent names that might be confusing or dangerous
+        if config_name.lower() in ["con", "prn", "aux", "nul"]:  # Windows reserved
+            raise ValueError(f"Invalid config name: '{config_name}' is a reserved name.")
+
+        logger.debug(f"Config name validated: {config_name}")
 
     def run_daemon(self, config_path: str, log_level: str = "INFO") -> int:
         """
@@ -180,6 +221,14 @@ class DeckyCLI:
         """
         # Remove .yaml if provided
         config_name = config_name.replace(".yaml", "")
+
+        # Validate config name for security
+        try:
+            self._validate_config_name(config_name)
+        except ValueError as e:
+            print(f"Error: {e}")
+            return 1
+
         config_file = self.configs_dir / f"{config_name}.yaml"
 
         if not config_file.exists():
@@ -211,6 +260,14 @@ class DeckyCLI:
         """
         # Remove .yaml if provided
         config_name = config_name.replace(".yaml", "")
+
+        # Validate config name for security
+        try:
+            self._validate_config_name(config_name)
+        except ValueError as e:
+            print(f"Error: {e}")
+            return 1
+
         config_file = self.configs_dir / f"{config_name}.yaml"
 
         if not config_file.exists():
@@ -262,6 +319,14 @@ class DeckyCLI:
         """
         # Remove .yaml if provided
         config_name = config_name.replace(".yaml", "")
+
+        # Validate config name for security
+        try:
+            self._validate_config_name(config_name)
+        except ValueError as e:
+            print(f"Error: {e}")
+            return 1
+
         config_file = self.configs_dir / f"{config_name}.yaml"
 
         if not config_file.exists():
