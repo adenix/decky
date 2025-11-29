@@ -1,9 +1,9 @@
 # Decky - Simple YAML-Driven Stream Deck for Linux
 
-[![Tests](https://github.com/anicholas/decky/workflows/Tests/badge.svg)](https://github.com/anicholas/decky/actions/workflows/tests.yml)
-[![Code Quality](https://github.com/anicholas/decky/workflows/Code%20Quality/badge.svg)](https://github.com/anicholas/decky/actions/workflows/lint.yml)
-[![Security](https://github.com/anicholas/decky/workflows/Security/badge.svg)](https://github.com/anicholas/decky/actions/workflows/security.yml)
-[![codecov](https://codecov.io/gh/anicholas/decky/branch/main/graph/badge.svg)](https://codecov.io/gh/anicholas/decky)
+[![Tests](https://github.com/adenix/decky/actions/workflows/tests.yml/badge.svg)](https://github.com/adenix/decky/actions/workflows/tests.yml)
+[![Code Quality](https://github.com/adenix/decky/actions/workflows/lint.yml/badge.svg)](https://github.com/adenix/decky/actions/workflows/lint.yml)
+[![Security](https://github.com/adenix/decky/actions/workflows/security.yml/badge.svg)](https://github.com/adenix/decky/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/adenix/decky/branch/main/graph/badge.svg)](https://codecov.io/gh/adenix/decky)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
