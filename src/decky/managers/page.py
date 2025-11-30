@@ -6,6 +6,7 @@ Handles page rendering, button updates, and page navigation.
 
 import logging
 import os
+import threading
 from typing import Any, Dict, Optional
 
 from ..device.renderer import ButtonRenderer
@@ -36,6 +37,7 @@ class PageManager:
         self.button_renderer = button_renderer
         self.animation_manager = animation_manager
         self.current_page = "main"
+        self._page_lock = threading.Lock()  # Prevent concurrent page/animation updates
 
     def switch_page(self, page_name: str, deck: Any, config: Dict[str, Any]) -> bool:
         """
@@ -70,32 +72,34 @@ class PageManager:
             logger.warning("Cannot update page - no deck connected")
             return
 
-        page_config = config.get("pages", {}).get(self.current_page, {})
-        buttons = page_config.get("buttons", {})
-        styles = config.get("styles", {})
+        # Lock to prevent animation updates during page rendering
+        with self._page_lock:
+            page_config = config.get("pages", {}).get(self.current_page, {})
+            buttons = page_config.get("buttons", {})
+            styles = config.get("styles", {})
 
-        # Clear animated buttons from previous page
-        self.animation_manager.clear_animations()
+            # Clear animated buttons from previous page
+            self.animation_manager.clear_animations()
 
-        # Clear all buttons to black first (prevents retention issues)
-        blank_image = self.button_renderer.render_blank(deck)
-        for key in range(deck.key_count()):
-            deck.set_key_image(key, blank_image)
+            # Clear all buttons to black first (prevents retention issues)
+            blank_image = self.button_renderer.render_blank(deck)
+            for key in range(deck.key_count()):
+                deck.set_key_image(key, blank_image)
 
-        # Render each button
-        for key in range(deck.key_count()):
-            button_num = key + 1
-            button_config = buttons.get(button_num, {})
+            # Render each button
+            for key in range(deck.key_count()):
+                button_num = key + 1
+                button_config = buttons.get(button_num, {})
 
-            if button_config:
-                self._render_button(key, button_config, styles, deck)
+                if button_config:
+                    self._render_button(key, button_config, styles, deck)
 
-        # Synchronize all animated buttons to start at the same time
-        if self.animation_manager.has_animations():
-            self.animation_manager.synchronize_animations()
-            logger.debug(
-                f"Page loaded with {self.animation_manager.get_animation_count()} animations"
-            )
+            # Synchronize all animated buttons to start at the same time
+            if self.animation_manager.has_animations():
+                self.animation_manager.synchronize_animations()
+                logger.debug(
+                    f"Page loaded with {self.animation_manager.get_animation_count()} animations"
+                )
 
     def _render_button(
         self, key: int, button_config: Dict[str, Any], styles: Dict[str, Any], deck: Any
@@ -141,14 +145,25 @@ class PageManager:
         if not deck or not self.animation_manager.has_animations():
             return
 
-        self.animation_manager.update_animations(deck)
+        # Lock to prevent page updates during animation rendering
+        # Use trylock to avoid blocking if page is being updated
+        if not self._page_lock.acquire(blocking=False):
+            # Page is being updated, skip this animation frame
+            return
 
-        # Render updated frames
-        styles = config.get("styles", {})
-        for key_index in list(self.animation_manager.animated_buttons.keys()):
-            frame_image = self.animation_manager.render_current_frame(key_index, styles, deck)
-            if frame_image:
-                deck.set_key_image(key_index, frame_image)
+        try:
+            self.animation_manager.update_animations(deck)
+
+            # Render updated frames
+            styles = config.get("styles", {})
+            for key_index in list(self.animation_manager.animated_buttons.keys()):
+                frame_image = self.animation_manager.render_current_frame(
+                    key_index, styles, deck
+                )
+                if frame_image:
+                    deck.set_key_image(key_index, frame_image)
+        finally:
+            self._page_lock.release()
 
     def _find_icon(self, icon_path: str) -> Optional[str]:
         """
