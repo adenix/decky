@@ -4,6 +4,7 @@ Page management for Stream Deck button layouts.
 Handles page rendering, button updates, and page navigation.
 """
 
+import copy
 import logging
 import os
 import threading
@@ -26,16 +27,18 @@ class PageManager:
     - Integration with animation system
     """
 
-    def __init__(self, button_renderer: ButtonRenderer, animation_manager: AnimationManager):
+    def __init__(self, button_renderer: ButtonRenderer, animation_manager: AnimationManager, widget_manager=None):
         """
         Initialize the page manager.
 
         Args:
             button_renderer: Renderer for creating button images
             animation_manager: Manager for handling animations
+            widget_manager: Manager for handling widgets (optional for backward compatibility)
         """
         self.button_renderer = button_renderer
         self.animation_manager = animation_manager
+        self.widget_manager = widget_manager
         self.current_page = "main"
         self._page_lock = threading.Lock()  # Prevent concurrent page/animation updates
 
@@ -78,8 +81,10 @@ class PageManager:
             buttons = page_config.get("buttons", {})
             styles = config.get("styles", {})
 
-            # Clear animated buttons from previous page
+            # Clear animated buttons and widgets from previous page
             self.animation_manager.clear_animations()
+            if self.widget_manager:
+                self.widget_manager.clear_widgets()
 
             # Clear all buttons to black first (prevents retention issues)
             blank_image = self.button_renderer.render_blank(deck)
@@ -107,7 +112,7 @@ class PageManager:
         """
         Render a single button.
 
-        Handles both static and animated buttons.
+        Handles static, animated, and widget buttons.
 
         Args:
             key: Zero-based key index
@@ -115,20 +120,35 @@ class PageManager:
             styles: Style configuration dictionary
             deck: Stream Deck device instance
         """
-        # Check for animated GIFs
+        # First, check for animated GIF backgrounds (must be done before widget setup)
+        # This allows widgets to have animated backgrounds
         icon_path = button_config.get("icon")
+        has_animated_background = False
         if icon_path and icon_path.lower().endswith(".gif"):
             icon_file = self._find_icon(icon_path)
             if icon_file:
-                # Try to set up animation
+                # Set up animation for the background
                 if self.animation_manager.setup_animated_button(key, button_config, icon_file):
-                    # Render initial frame
-                    frame_image = self.animation_manager.render_current_frame(key, styles, deck)
-                    if frame_image:
-                        deck.set_key_image(key, frame_image)
-                    return  # Animation set up successfully
+                    has_animated_background = True
 
-        # Render static button
+        # Check if this is a widget button
+        if "widget" in button_config and self.widget_manager:
+            if self.widget_manager.setup_widget_button(key, button_config, styles):
+                # Render initial widget state
+                # If there's an animated background, the widget will be rendered on top
+                image = self.widget_manager.render_widget(key, styles, deck, force=True)
+                if image:
+                    deck.set_key_image(key, image)
+                return  # Widget set up successfully
+
+        # For non-widget buttons with animations, render the first frame
+        if has_animated_background:
+            frame_image = self.animation_manager.render_current_frame(key, styles, deck)
+            if frame_image:
+                deck.set_key_image(key, frame_image)
+            return  # Animation set up successfully
+
+        # Render static button (no widget, no animation)
         image = self.button_renderer.render_button(button_config, styles, deck)
         deck.set_key_image(key, image)
 
@@ -154,9 +174,42 @@ class PageManager:
         try:
             self.animation_manager.update_animations(deck)
 
-            # Render updated frames
+            # Render updated frames with layered compositing
             styles = config.get("styles", {})
             for key_index in list(self.animation_manager.animated_buttons.keys()):
+                # Check if this button has a widget overlay
+                if self.widget_manager and key_index in self.widget_manager.active_widgets:
+                    # LAYERED RENDERING: Composite GIF background + widget text
+                    widget_text = self.widget_manager.get_widget_text(key_index)
+                    if widget_text is not None:
+                        # Get widget's button config safely (thread-safe access)
+                        try:
+                            widget_data = self.widget_manager.active_widgets.get(key_index)
+                            if not widget_data:
+                                continue  # Widget was removed during iteration
+                                
+                            button_config = copy.deepcopy(widget_data["button_config"])
+                            button_config["text"] = widget_text
+                            
+                            # Get current animation frame
+                            anim_data = self.animation_manager.animated_buttons.get(key_index)
+                            if not anim_data:
+                                continue  # Animation was removed during iteration
+                                
+                            current_frame = anim_data["frames"][anim_data["current_frame"]]
+                            
+                            # Composite: render text over animation frame
+                            frame_image = self.button_renderer.render_button_with_icon(
+                                button_config, styles, deck, current_frame
+                            )
+                            if frame_image:
+                                deck.set_key_image(key_index, frame_image)
+                        except (KeyError, IndexError) as e:
+                            # Widget or animation removed during render - skip this frame
+                            logger.debug(f"Skipping frame for button {key_index}: {e}")
+                    continue
+                    
+                # No widget: just render the animation frame
                 frame_image = self.animation_manager.render_current_frame(
                     key_index, styles, deck
                 )

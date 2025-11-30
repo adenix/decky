@@ -11,7 +11,7 @@ from .actions.registry import registry
 from .config.loader import ConfigLoader
 from .device.manager import DeviceManager
 from .device.renderer import ButtonRenderer
-from .managers import AnimationManager, ConnectionManager, PageManager
+from .managers import AnimationManager, ConnectionManager, PageManager, WidgetManager
 from .platforms import detect_platform
 from .platforms.base import Platform
 
@@ -50,17 +50,24 @@ class DeckyController:
 
         # Initialize managers
         self.animation_manager = AnimationManager(self.button_renderer)
+        self.widget_manager = WidgetManager(self.button_renderer, self.animation_manager)
         self.connection_manager = ConnectionManager(
             device_manager=self.device_manager,
             platform=self.platform,
             on_connected=self._on_device_connected,
             on_disconnected=self._on_device_disconnected,
         )
-        self.page_manager = PageManager(self.button_renderer, self.animation_manager)
+        self.page_manager = PageManager(
+            self.button_renderer, self.animation_manager, self.widget_manager
+        )
 
         # Register all actions
         registry.auto_discover()
         logger.info(f"Registered actions: {registry.list_actions()}")
+
+        # Register all widgets
+        self.widget_manager.widget_registry.auto_discover()
+        logger.info(f"Registered widgets: {self.widget_manager.widget_registry.list_widgets()}")
 
     @property
     def deck(self) -> Optional[Any]:
@@ -218,9 +225,16 @@ class DeckyController:
 
         try:
             while self.running:
-                # Update animations if we have a deck
+                # Update animations and widgets if we have a deck
                 if self.deck:
                     self.page_manager.update_animated_buttons(self.deck, self.config)
+
+                    # Update widgets that need refreshing
+                    widget_updates = self.widget_manager.update_widgets(
+                        self.deck, self.config.get("styles", {})
+                    )
+                    for key_index, image in widget_updates.items():
+                        self.deck.set_key_image(key_index, image)
 
                 # Short sleep to prevent CPU spinning
                 time.sleep(0.01)

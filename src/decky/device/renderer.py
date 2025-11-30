@@ -211,8 +211,7 @@ class ButtonRenderer:
         Draw text on a Stream Deck button image.
 
         Renders multi-line text with configurable styling including font, color,
-        and alignment. Automatically adds shadow when text is overlaid on icons
-        for improved readability.
+        alignment, and optional border/shadow for improved readability.
 
         Args:
             draw: PIL ImageDraw object to draw on
@@ -223,13 +222,15 @@ class ButtonRenderer:
                 - text_color (str): Hex color code (e.g., '#FFFFFF')
                 - text_align (str): 'top', 'center', or 'bottom'
                 - text_offset (int): Fine-tune vertical position in pixels
+                - border_size (int): Border thickness in pixels (default: 1 if icon_loaded, else 0)
+                - border_color (str): Border color hex code (default: '#000000')
             image_size: Button dimensions as (width, height) tuple in pixels
-            icon_loaded: If True, adds black shadow around text for contrast
+            icon_loaded: If True, border_size defaults to 1 (can still be overridden)
 
         Note:
             Text is automatically centered horizontally. Vertical alignment
-            is controlled by style['text_align']. The shadow is only added
-            when icon_loaded=True to ensure text is readable over images.
+            is controlled by style['text_align']. The border/shadow helps ensure
+            text is readable over icons or busy backgrounds.
 
         Example:
             >>> style = {
@@ -237,7 +238,9 @@ class ButtonRenderer:
             ...     "font_size": 14,
             ...     "text_color": "#FFFFFF",
             ...     "text_align": "bottom",
-            ...     "text_offset": 0
+            ...     "text_offset": 0,
+            ...     "border_size": 2,
+            ...     "border_color": "#000000"
             ... }
             >>> self._draw_text(draw, "Hello\\nWorld", style, (72, 72), False)
         """
@@ -246,45 +249,78 @@ class ButtonRenderer:
         text_color = style.get("text_color", "#FFFFFF")
         text_align = style.get("text_align", "bottom")
         text_offset = style.get("text_offset", 0)
+        
+        # Text border/shadow (useful for text over icons)
+        border_size = style.get("border_size", 1 if icon_loaded else 0)
+        border_color = style.get("border_color", "#000000")
 
         # Load font
         font = self._load_font(font_name, font_size)
 
         # Process multi-line text
         lines = text.split("\n")
-        total_text_height = len(lines) * (font_size + 2)
+        
+        # Calculate actual text height using font metrics
+        # We need to get bboxes for all lines to calculate total visual height
+        line_bboxes = []
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            line_bboxes.append(bbox)
+        
+        # Calculate total height of text block
+        # For multi-line text, we need to stack them vertically
+        line_spacing = 2
+        if len(lines) == 1:
+            # Single line: just use the bbox height
+            total_text_height = line_bboxes[0][3] - line_bboxes[0][1]
+        else:
+            # Multi-line: sum heights and add spacing
+            total_text_height = sum(bbox[3] - bbox[1] for bbox in line_bboxes)
+            total_text_height += (len(lines) - 1) * line_spacing
 
-        # Calculate vertical position
+        # Calculate vertical starting position for the text block
         if text_align == "top":
-            y_offset = 8
+            y_start = 8
         elif text_align == "center":
-            y_offset = (image_size[1] - total_text_height) // 2
+            # Center the entire text block vertically
+            y_start = (image_size[1] - total_text_height) // 2
         else:  # bottom
-            y_offset = image_size[1] - total_text_height - 8
+            y_start = image_size[1] - total_text_height - 8
 
         # Apply fine adjustment
-        y_offset += text_offset
+        y_start += text_offset
 
         # Draw each line
-        for line in lines:
-            # Get text dimensions
-            bbox = draw.textbbox((0, 0), line, font=font)
+        y_offset = y_start
+        for i, line in enumerate(lines):
+            bbox = line_bboxes[i]
+            
+            # Calculate horizontal center position
             line_width = bbox[2] - bbox[0]
             text_x = (image_size[0] - line_width) // 2
 
-            if icon_loaded:
-                # Add shadow for readability over icons
-                shadow_color = "#000000"
-                for dx in [-1, 0, 1]:
-                    for dy in [-1, 0, 1]:
+            # Account for bbox top offset to position text correctly
+            # The bbox[1] (top) can be negative for tall ascenders
+            line_y = y_offset - bbox[1]
+
+            # Draw text border/shadow if enabled
+            if border_size and border_size > 0:
+                # Create border by drawing text in multiple positions around the main position
+                for dx in range(-border_size, border_size + 1):
+                    for dy in range(-border_size, border_size + 1):
                         if dx != 0 or dy != 0:
                             draw.text(
-                                (text_x + dx, y_offset + dy), line, font=font, fill=shadow_color
+                                (text_x + dx, line_y + dy), 
+                                line, 
+                                font=font, 
+                                fill=border_color
                             )
 
             # Draw the actual text
-            draw.text((text_x, y_offset), line, font=font, fill=text_color)
-            y_offset += font_size + 2
+            draw.text((text_x, line_y), line, font=font, fill=text_color)
+            
+            # Move to next line using actual line height
+            y_offset += (bbox[3] - bbox[1]) + line_spacing
 
     def _load_font(self, font_name: str, font_size: int):
         """Load a font with caching"""
