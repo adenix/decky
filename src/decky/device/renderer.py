@@ -7,15 +7,32 @@ import os
 from typing import Any, Dict, Optional
 
 from PIL import Image, ImageDraw, ImageFont
+from PIL.Image import UnidentifiedImageError
 from StreamDeck.ImageHelpers import PILHelper
 
 logger = logging.getLogger(__name__)
 
 
 class ButtonRenderer:
-    """Renders button images for Stream Deck"""
+    """
+    Renders button images for Stream Deck devices.
+
+    This class handles all aspects of button image generation including:
+    - Text rendering with custom fonts and styles
+    - Icon loading and scaling
+    - Transparency handling
+    - Multi-line text support
+    - Text shadows for readability over icons
+
+    The renderer caches fonts for performance and supports various
+    image formats through PIL/Pillow.
+
+    Attributes:
+        font_cache: Dictionary mapping font keys to loaded ImageFont objects
+    """
 
     def __init__(self):
+        """Initialize the button renderer with an empty font cache."""
         self.font_cache = {}
 
     def render_button(self, button_config: Dict[str, Any], styles: Dict[str, Any], deck) -> bytes:
@@ -72,8 +89,15 @@ class ButtonRenderer:
                     image.paste(icon, icon_pos)
                     icon_loaded = True
 
+                except (FileNotFoundError, PermissionError) as e:
+                    logger.warning(f"Cannot access icon file {icon_file}: {e}")
+                except UnidentifiedImageError as e:
+                    logger.warning(f"Invalid or corrupted image file {icon_file}: {e}")
+                except OSError as e:
+                    logger.warning(f"Error reading icon file {icon_file}: {e}")
                 except Exception as e:
-                    logger.warning(f"Failed to load icon {icon_file}: {e}")
+                    # Unexpected errors should be logged with full traceback
+                    logger.error(f"Unexpected error loading icon {icon_file}: {e}", exc_info=True)
 
         # Draw text
         text = button_config.get("text") or button_config.get("label", "")
@@ -127,12 +151,17 @@ class ButtonRenderer:
                     icon = icon.crop((left, top, right, bottom))
 
                 # Paste icon
-                icon_pos = ((image_size[0] - icon.width) // 2, (image_size[1] - icon.height) // 2)
+                icon_pos = (
+                    (image_size[0] - icon.width) // 2,
+                    (image_size[1] - icon.height) // 2,
+                )
                 image.paste(icon, icon_pos)
                 icon_loaded = True
 
+            except OSError as e:
+                logger.warning(f"Error processing icon frame: {e}")
             except Exception as e:
-                logger.warning(f"Failed to process icon frame: {e}")
+                logger.error(f"Unexpected error processing icon frame: {e}", exc_info=True)
 
         # Draw text
         text = button_config.get("text") or button_config.get("label", "")
@@ -171,9 +200,47 @@ class ButtonRenderer:
         return None
 
     def _draw_text(
-        self, draw, text: str, style: Dict[str, Any], image_size: tuple, icon_loaded: bool
-    ):
-        """Draw text on button"""
+        self,
+        draw: ImageDraw.Draw,
+        text: str,
+        style: Dict[str, Any],
+        image_size: tuple,
+        icon_loaded: bool,
+    ) -> None:
+        """
+        Draw text on a Stream Deck button image.
+
+        Renders multi-line text with configurable styling including font, color,
+        and alignment. Automatically adds shadow when text is overlaid on icons
+        for improved readability.
+
+        Args:
+            draw: PIL ImageDraw object to draw on
+            text: Text to render. Use '\\n' for multi-line text
+            style: Style dictionary containing:
+                - font (str): Font name or path
+                - font_size (int): Size in points
+                - text_color (str): Hex color code (e.g., '#FFFFFF')
+                - text_align (str): 'top', 'center', or 'bottom'
+                - text_offset (int): Fine-tune vertical position in pixels
+            image_size: Button dimensions as (width, height) tuple in pixels
+            icon_loaded: If True, adds black shadow around text for contrast
+
+        Note:
+            Text is automatically centered horizontally. Vertical alignment
+            is controlled by style['text_align']. The shadow is only added
+            when icon_loaded=True to ensure text is readable over images.
+
+        Example:
+            >>> style = {
+            ...     "font": "DejaVu Sans",
+            ...     "font_size": 14,
+            ...     "text_color": "#FFFFFF",
+            ...     "text_align": "bottom",
+            ...     "text_offset": 0
+            ... }
+            >>> self._draw_text(draw, "Hello\\nWorld", style, (72, 72), False)
+        """
         font_name = style.get("font", "DejaVu Sans")
         font_size = style.get("font_size", 14)
         text_color = style.get("text_color", "#FFFFFF")
@@ -259,7 +326,15 @@ class ButtonRenderer:
                                     font = ImageFont.truetype(font_path, font_size)
                                     logger.debug(f"Loaded font: {font_path}")
                                     break
-                                except Exception:
+                                except OSError as e:
+                                    # Font file might be corrupted or inaccessible
+                                    logger.debug(f"Cannot load font {font_path}: {e}")
+                                    continue
+                                except Exception as e:
+                                    # Unexpected error, log but continue searching
+                                    logger.warning(
+                                        f"Unexpected error loading font {font_path}: {e}"
+                                    )
                                     continue
                     if font:
                         break

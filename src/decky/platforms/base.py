@@ -11,7 +11,40 @@ logger = logging.getLogger(__name__)
 
 
 class Platform(ABC):
-    """Base platform class for distribution/DE specific implementations"""
+    """
+    Base platform abstraction for distribution/desktop environment support.
+
+    This class provides a common interface for platform-specific operations
+    that vary across different Linux distributions and desktop environments
+    (KDE Plasma, GNOME, etc.).
+
+    Subclasses should implement all abstract methods to provide platform-specific
+    functionality for:
+    - Application launching
+    - Screen lock detection
+    - Media player control
+    - Volume control
+
+    Class Attributes:
+        name: Unique identifier for this platform (e.g., "kde", "gnome")
+        desktop_environment: Desktop environment name (e.g., "plasma", "gnome")
+
+    Example:
+        >>> class MyPlatform(Platform):
+        ...     name = "my_platform"
+        ...     desktop_environment = "my_de"
+        ...
+        ...     def detect(self):
+        ...         return os.environ.get("XDG_CURRENT_DESKTOP") == "MyDE"
+        ...
+        ...     def launch_application(self, app_id):
+        ...         subprocess.Popen(["my-launcher", app_id])
+        ...         return True
+        ...
+        ...     def is_screen_locked(self):
+        ...         # Check lock status
+        ...         return False
+    """
 
     name: str = "base"
     desktop_environment: Optional[str] = None
